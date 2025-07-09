@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,4 +24,22 @@ func main() {
 		log.Fatal(e)
 	}
 	defer r.Body.Close()
+
+	var boards []map[string]any
+
+	e = json.NewDecoder(r.Body).Decode(&boards)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	fmt.Printf("Found %d boards:\n", len(boards))
+	for i, board := range boards {
+		fmt.Printf("\nBoard %d:\n", i+1)
+		fmt.Printf("  Name: %v\n", board["name"])
+
+		fmt.Println("  Keys:")
+		for key := range board {
+			fmt.Printf("    - %s\n", key)
+		}
+	}
 }
