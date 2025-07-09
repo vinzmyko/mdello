@@ -16,16 +16,17 @@ func main() {
 	}
 
 	trello := NewTrelloClient(apiKey, token)
+
 	boards := trello.GetBoards()
+	fmt.Printf("Found %d boards\n", len(boards))
 
-	fmt.Printf("Found %d boards:\n", len(boards))
-	for i, board := range boards {
-		fmt.Printf("\nBoard %d:\n", i+1)
-		fmt.Printf("  Name: %v\n", board["name"])
+	// Replace with desired board id
+	boardId := "686e846f2aee13b00660b241"
+	lists := trello.GetLists(boardId)
+	fmt.Printf("Found %d lists\n", len(lists))
 
-		fmt.Println("  Keys:")
-		for key := range board {
-			fmt.Printf("    - %s\n", key)
-		}
-	}
+	// Replace with desired list id
+	listId := "686e846f2aee13b00660b281"
+	cards := trello.GetCards(listId)
+	fmt.Printf("Found %d cards\n", len(cards))
 }
