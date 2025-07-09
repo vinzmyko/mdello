@@ -2,6 +2,11 @@
 
 1. Separation of Concerns
     - TrelloAPI - "Talks to Trello's servers" (Create a interface for this for testing later)
+        - Access API key and token ✅
+        - Explore more Trello API routes and understand the structure
+            - Boards✅, lists, cards
+            - Creating boards, lists, cards
+        - When you understand the structure more refactor into TrelloClient struct in trello.go
     - MarkdownParser - "Converts between markdown and board objects"  
     - FileHandler - "Reads and writes markdown files"
     - SyncCoordinator - "Orchestrates the sync process"
