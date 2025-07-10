@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 type TrelloClient struct {
@@ -76,4 +77,49 @@ func (t TrelloClient) GetCards(listId string) []map[string]any {
 	}
 
 	return cards
+}
+
+func (t TrelloClient) CreateBoard(boardName string) error {
+	encodedName := url.QueryEscape(boardName)
+	url := fmt.Sprintf("%s/boards/?name=%s&key=%s&token=%s", t.baseUrl, encodedName, t.apiKey, t.token)
+
+	r, e := http.Post(url, "application/json", nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+	defer r.Body.Close()
+
+	fmt.Printf("%d\n", r.StatusCode)
+
+	return nil
+}
+
+func (t TrelloClient) CreateList(listName, boardId string) error {
+	encodedName := url.QueryEscape(listName)
+	url := fmt.Sprintf("%s/lists/?name=%s&idBoard=%s&key=%s&token=%s", t.baseUrl, encodedName, boardId, t.apiKey, t.token)
+
+	r, e := http.Post(url, "application/json", nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+	defer r.Body.Close()
+
+	fmt.Printf("%d\n", r.StatusCode)
+
+	return nil
+}
+
+func (t TrelloClient) CreateCard(cardName, listId string) error {
+	encodedName := url.QueryEscape(cardName)
+	url := fmt.Sprintf("%s/cards/?name=%s&idList=%s&key=%s&token=%s", t.baseUrl, encodedName, listId, t.apiKey, t.token)
+
+	r, e := http.Post(url, "application/json", nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+	defer r.Body.Close()
+
+	fmt.Printf("%d\n", r.StatusCode)
+
+	return nil
 }
