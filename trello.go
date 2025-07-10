@@ -185,3 +185,61 @@ func (t TrelloClient) UpdateCard(cardId, newCardName string) error {
 
 	return nil
 }
+
+func (t TrelloClient) DeleteBoard(boardId string) error {
+	url := fmt.Sprintf("%s/boards/%s?key=%s&token=%s", t.baseUrl, boardId, t.apiKey, t.token)
+
+	req, e := http.NewRequest("DELETE", url, nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(e)
+	}
+	defer response.Body.Close()
+
+	fmt.Printf("%d\n", response.StatusCode)
+
+	return nil
+}
+
+// this has a value key for if you want to archive it or not
+func (t TrelloClient) ArchiveList(listId string, setArchive bool) error {
+	url := fmt.Sprintf("%s/lists/%s/closed?value=%t&key=%s&token=%s", t.baseUrl, listId, setArchive, t.apiKey, t.token)
+
+	req, e := http.NewRequest("PUT", url, nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(e)
+	}
+	defer response.Body.Close()
+
+	fmt.Printf("%d\n", response.StatusCode)
+
+	return nil
+}
+
+func (t TrelloClient) DeleteCard(cardId string) error {
+	url := fmt.Sprintf("%s/cards/%s?key=%s&token=%s", t.baseUrl, cardId, t.apiKey, t.token)
+
+	req, e := http.NewRequest("DELETE", url, nil)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(e)
+	}
+	defer response.Body.Close()
+
+	fmt.Printf("%d\n", response.StatusCode)
+
+	return nil
+}
