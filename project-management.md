@@ -21,11 +21,12 @@
 - Access API key and token ✅
 - Create TrelloClient in trello.go ✅
 - Trello CRUD operation functions ✅
+- HealthCheck() error { return nil }, for use as a guard clause ✅
 
 ## In Progress
-- HealthCheck() error { return nil }, for use as a guard clause
 - Data Models
     - Instead of `map[string]any`, create proper structs
+    - GetBoard ✅, UpdateBoard ✅, CreateBoard ✅, DeleteBoard ✅
 
 ## Queued Up
 - Error handling and robustness
@@ -36,4 +37,4 @@
 - Basic CLI structure
 
 ## Backlog
-- When trello.go gets too big separate into new dir/ with lists.go, cards.go, client.go, types.go etc
+- When trello.go gets too big separate into new dir/ with lists.go, cards.go
