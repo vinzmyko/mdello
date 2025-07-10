@@ -22,6 +22,23 @@ func NewTrelloClient(apiKey, token string) TrelloClient {
 	}
 }
 
+func (t TrelloClient) HealthCheck() error {
+	url := fmt.Sprintf("%s/members/me/?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
+
+	r, e := http.Get(url)
+	if e != nil {
+		log.Fatal(e)
+	}
+	defer r.Body.Close()
+
+	if r.StatusCode != 200 {
+		err := fmt.Sprintf("API unavailable: status %d", r.StatusCode)
+		log.Fatal(err)
+	}
+
+	return nil
+}
+
 func (t TrelloClient) GetBoards() []map[string]any {
 	url := fmt.Sprintf("%s/members/me/boards?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
 
