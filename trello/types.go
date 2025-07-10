@@ -1,7 +1,46 @@
 package trello
 
-// From "Update a Board" endpoint
-type Board struct {
+type CreateBoard struct {
+	Name                 string  `json:"name"`                            // Required. The new name for the board. 1 to 16384 characters long
+	DefaultLabels        *bool   `json:"defaultLabels,omitempty"`         // Determines whether to use the default set of labels. Default: true
+	DefaultLists         *bool   `json:"defaultLists,omitempty"`          // Determines whether to add the default set of lists (To Do, Doing, Done). Ignored if idBoardSource is provided. Default: true
+	Desc                 *string `json:"desc,omitempty"`                  // A new description for the board, 0 to 16384 characters long
+	IdOrganisation       *string `json:"idOrganization,omitempty"`        // The id or name of the Workspace the board should belong to. Pattern: ^[0-9a-fA-F]{24}$
+	IdBoardSource        *string `json:"idBoardSource,omitempty"`         // The id of a board to copy into the new board. Pattern: ^[0-9a-fA-F]{24}$
+	KeepFromSource       *string `json:"keepFromSource,omitempty"`        // To keep cards from the original board pass in 'cards'. Valid values: cards, none. Default: none
+	PowerUps             *string `json:"powerUps,omitempty"`              // The Power-Ups that should be enabled. Valid values: all, calendar, cardAging, recap, voting
+	PrefsPermissionLevel *string `json:"prefs_permissionLevel,omitempty"` // The permissions level of the board. Valid values: org, private, public. Default: private
+	PrefsVoting          *string `json:"prefs_voting,omitempty"`          // Who can vote on this board. Valid values: disabled, members, observers, org, public. Default: disabled
+	PrefsComments        *string `json:"prefs_comments,omitempty"`        // Who can comment on cards. Valid values: disabled, members, observers, org, public. Default: members
+	PrefsInvitations     *string `json:"prefs_invitations,omitempty"`     // What types of members can invite users to join. Valid values: members, admins. Default: members
+	PrefsSelfJoin        *bool   `json:"prefs_selfJoin,omitempty"`        // Determines whether users can join the boards themselves or must be invited. Default: true
+	PrefsCardCovers      *bool   `json:"prefs_cardCovers,omitempty"`      // Determines whether card covers are enabled. Default: true
+	PrefsBackground      *string `json:"prefs_background,omitempty"`      // The id of a custom background or colour. Valid values: blue, orange, green, red, purple, pink, lime, sky, grey. Default: blue
+	PrefsCardAging       *string `json:"prefs_cardAging,omitempty"`       // The type of card aging. Valid values: pirate, regular. Default: regular
+}
+
+type GetBoard struct {
+	ID                     string  `json:"id"`                                // Required. The ID of the board to retrieve. Must match pattern: ^[0-9a-fA-F]{24}$
+	Actions                *string `json:"actions,omitempty"`                 // Nested resource for actions. Default: all
+	BoardStars             *string `json:"boardStars,omitempty"`              // Valid values: mine or none. Default: none
+	Cards                  *string `json:"cards,omitempty"`                   // Nested resource for cards. Default: none
+	CardPluginData         *bool   `json:"card_pluginData,omitempty"`         // Include card pluginData with response when used with cards param. Default: false
+	Checklists             *string `json:"checklists,omitempty"`              // Nested resource for checklists. Default: none
+	CustomFields           *bool   `json:"customFields,omitempty"`            // Nested resource for custom fields. Default: false
+	Fields                 *string `json:"fields,omitempty"`                  // Board fields to include. Valid: all or comma-separated list of: closed, dateLastActivity, dateLastView, desc, descData, idMemberCreator, idOrganization, invitations, invited, labelNames, memberships, name, pinned, powerUps, prefs, shortLink, shortUrl, starred, subscribed, url. Default: name,desc,descData,closed,idOrganization,pinned,url,shortUrl,prefs,labelNames
+	Labels                 *string `json:"labels,omitempty"`                  // Nested resource for labels
+	Lists                  *string `json:"lists,omitempty"`                   // Nested resource for lists. Default: open
+	Members                *string `json:"members,omitempty"`                 // Nested resource for members. Default: none
+	Memberships            *string `json:"memberships,omitempty"`             // Nested resource for memberships. Default: none
+	PluginData             *bool   `json:"pluginData,omitempty"`              // Whether pluginData for this board should be returned. Default: false
+	Organisation           *bool   `json:"organization,omitempty"`            // Nested resource for organisations. Default: false
+	OrganisationPluginData *bool   `json:"organization_pluginData,omitempty"` // Include organisation pluginData with response when used with organisation param. Default: false
+	MyPrefs                *bool   `json:"myPrefs,omitempty"`                 // Include user preferences for this board. Default: false
+	Tags                   *bool   `json:"tags,omitempty"`                    // Include collections/tags that the board belongs to. Default: false
+}
+
+type UpdateBoard struct {
+	ID                       string  `json:"id"`                                  // Required. The ID of the board to retrieve. Must match pattern: ^[0-9a-fA-F]{24}$
 	Name                     *string `json:"name,omitempty"`                      // The new name for the board. 1 to 16384 characters long.
 	Desc                     *string `json:"desc,omitempty"`                      // A new description for the board, 0 to 16384 characters long
 	Closed                   *bool   `json:"closed,omitempty"`                    // Whether the board is closed
