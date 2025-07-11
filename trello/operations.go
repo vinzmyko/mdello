@@ -65,49 +65,61 @@ func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 	return cards, nil
 }
 
-func (t TrelloClient) CreateBoard(boardName string) error {
+func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
 	encodedName := url.QueryEscape(boardName)
 	url := fmt.Sprintf("%s/boards/?name=%s&key=%s&token=%s", t.baseUrl, encodedName, t.apiKey, t.token)
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	fmt.Printf("%d\n", r.StatusCode)
+	var board Board
+	e = json.NewDecoder(r.Body).Decode(&board)
+	if e != nil {
+		return nil, e
+	}
 
-	return nil
+	return &board, nil
 }
 
-func (t TrelloClient) CreateList(listName, boardId string) error {
+func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
 	encodedName := url.QueryEscape(listName)
 	url := fmt.Sprintf("%s/lists/?name=%s&idBoard=%s&key=%s&token=%s", t.baseUrl, encodedName, boardId, t.apiKey, t.token)
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	fmt.Printf("%d\n", r.StatusCode)
+	var list List
+	e = json.NewDecoder(r.Body).Decode(&list)
+	if e != nil {
+		return nil, e
+	}
 
-	return nil
+	return &list, nil
 }
 
-func (t TrelloClient) CreateCard(cardName, listId string) error {
+func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 	encodedName := url.QueryEscape(cardName)
 	url := fmt.Sprintf("%s/cards/?name=%s&idList=%s&key=%s&token=%s", t.baseUrl, encodedName, listId, t.apiKey, t.token)
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	fmt.Printf("%d\n", r.StatusCode)
+	var card Card
+	e = json.NewDecoder(r.Body).Decode(&card)
+	if e != nil {
+		return nil, e
+	}
 
-	return nil
+	return &card, nil
 }
 
 // We should add it so that the input shouldn't be boardName but the actual struct, when I add the types later
