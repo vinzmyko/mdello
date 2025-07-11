@@ -124,64 +124,77 @@ func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 
 // We should add it so that the input shouldn't be boardName but the actual struct, when I add the types later
 // I would then need to automatically create the apiUrl based on if a param is nil or not
-func (t TrelloClient) UpdateBoard(boardId, newBoardName string) error {
+func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) {
 	encodedName := url.QueryEscape(newBoardName)
 	url := fmt.Sprintf("%s/boards/%s?name=%s&key=%s&token=%s", t.baseUrl, boardId, encodedName, t.apiKey, t.token)
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	var board Board
+	err = json.NewDecoder(response.Body).Decode(&board)
+	if err != nil {
+		return nil, err
 	}
 
-	fmt.Printf("%d\n", response.StatusCode)
-
-	return nil
+	return &board, nil
 }
 
 // should be something like what list/board/card you want to update and then the struct with all the information
-func (t TrelloClient) UpdateList(listId, newListName string) error {
+func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
 	encodedName := url.QueryEscape(newListName)
 	url := fmt.Sprintf("%s/lists/%s?name=%s&key=%s&token=%s", t.baseUrl, listId, encodedName, t.apiKey, t.token)
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return nil, err
 	}
 	defer response.Body.Close()
 
-	fmt.Printf("%d\n", response.StatusCode)
+	var list List
+	err = json.NewDecoder(response.Body).Decode(&list)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return &list, nil
 }
 
-func (t TrelloClient) UpdateCard(cardId, newCardName string) error {
+func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
 	encodedName := url.QueryEscape(newCardName)
 	url := fmt.Sprintf("%s/cards/%s?name=%s&key=%s&token=%s", t.baseUrl, cardId, encodedName, t.apiKey, t.token)
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return nil, err
 	}
 	defer response.Body.Close()
 
-	fmt.Printf("%d\n", response.StatusCode)
+	var card Card
+	err = json.NewDecoder(response.Body).Decode(&card)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return &card, nil
 }
 
 func (t TrelloClient) DeleteBoard(boardId string) error {
