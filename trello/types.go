@@ -161,6 +161,25 @@ type UpdateBoardParams struct {
 	LabelNamesBlue           *string `json:"labelNames/blue,omitempty"`
 }
 
+// ========== LIST ==========
+
+type List struct {
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	Closed     bool       `json:"closed"`
+	Colour     *string    `json:"color"`
+	IdBoard    string     `json:"idBoard"`
+	Pos        float64    `json:"pos"`
+	Subscribed bool       `json:"subscribed"`
+	SoftLimit  *string    `json:"softLimit"`
+	Type       *string    `json:"type"`
+	Datasource Datasource `json:"datasource"`
+}
+
+type Datasource struct {
+	Filter bool `json:"filter"`
+}
+
 type CreateListParams struct {
 	Name         string  `json:"name"`                   // Required. Name for the list
 	IdBoard      string  `json:"idBoard"`                // Required. The long ID of the board the list should be created on. Pattern: ^[0-9a-fA-F]{24}$
