@@ -23,11 +23,11 @@
 - Trello CRUD operation functions ✅
 - HealthCheck() error { return nil }, for use as a guard clause ✅
 - Create, Read, Update Data Models ✅
+- Make functions return created structs not `[]map[string]any,` error ✅
+- Currently, using log.Fatal() everywhere, replace it ✅
 
 ## In Progress
 - Error handling and robustness
-    - Make functions return created structs not []map[string]any, error
-    - Currently, using log.Fatal() everywhere
     - Handle HTTP status codes (404, 401, etc.)
     - Add timeout handling?
 
@@ -36,3 +36,4 @@
 
 ## Backlog
 - When trello.go gets too big separate into new dir/ with lists.go, cards.go
+- Update the operations.go to use the Params structs at input parameters
