@@ -1,5 +1,102 @@
 package trello
 
+// ========== BOARD ==========
+
+type Board struct {
+	ID                string       `json:"id"`
+	Name              string       `json:"name"`
+	Desc              string       `json:"desc"`
+	DescData          string       `json:"descData"`
+	Closed            bool         `json:"closed"`
+	IdMemberCreator   string       `json:"idMemberCreator"`
+	IdOrganisation    string       `json:"idOrganization"`
+	Pinned            bool         `json:"pinned"`
+	Url               string       `json:"url"`
+	ShortUrl          string       `json:"shortUrl"`
+	Prefs             BoardPrefs   `json:"prefs"`
+	LabelNames        LabelNames   `json:"labelNames"`
+	Limits            BoardLimits  `json:"limits"`
+	Starred           bool         `json:"starred"`
+	Memberships       []Membership `json:"memberships"`
+	ShortLink         string       `json:"shortLink"`
+	Subscribed        bool         `json:"subscribed"`
+	PowerUps          []string     `json:"powerUps"`
+	PremiumFeatures   []string     `json:"premiumFeatures"`
+	DateLastActivity  string       `json:"dateLastActivity"`
+	DateLastView      string       `json:"dateLastView"`
+	IdTags            []string     `json:"idTags"`
+	DatePluginDisable string       `json:"datePluginDisable"`
+	CreationMethod    string       `json:"creationMethod"`
+	IxUpdate          string       `json:"ixUpdate"`
+	TemplateGallery   string       `json:"templateGallery"`
+	EnterpriseOwned   bool         `json:"enterpriseOwned"`
+}
+
+type BoardPrefs struct {
+	PermissionLevel        string                 `json:"permissionLevel"`
+	HideVotes              bool                   `json:"hideVotes"`
+	Voting                 string                 `json:"voting"`
+	Comments               string                 `json:"comments"`
+	SelfJoin               bool                   `json:"selfJoin"`
+	CardCovers             bool                   `json:"cardCovers"`
+	IsTemplate             bool                   `json:"isTemplate"`
+	CardAging              string                 `json:"cardAging"`
+	CalendarFeedEnabled    bool                   `json:"calendarFeedEnabled"`
+	Background             string                 `json:"background"`
+	BackgroundImage        string                 `json:"backgroundImage"`
+	BackgroundImageScaled  []BackgroundImageScale `json:"backgroundImageScaled"`
+	BackgroundTile         bool                   `json:"backgroundTile"`
+	BackgroundBrightness   string                 `json:"backgroundBrightness"`
+	BackgroundBottomColour string                 `json:"backgroundBottomColor"`
+	BackgroundTopColour    string                 `json:"backgroundTopColor"`
+	CanBePublic            bool                   `json:"canBePublic"`
+	CanBeEnterprise        bool                   `json:"canBeEnterprise"`
+	CanBeOrg               bool                   `json:"canBeOrg"`
+	CanBePrivate           bool                   `json:"canBePrivate"`
+	CanInvite              bool                   `json:"canInvite"`
+}
+
+type BackgroundImageScale struct {
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	Url    string `json:"url"`
+}
+
+type LabelNames struct {
+	Green  string `json:"green"`
+	Yellow string `json:"yellow"`
+	Orange string `json:"orange"`
+	Red    string `json:"red"`
+	Purple string `json:"purple"`
+	Blue   string `json:"blue"`
+	Sky    string `json:"sky"`
+	Lime   string `json:"lime"`
+	Pink   string `json:"pink"`
+	Black  string `json:"black"`
+}
+
+type BoardLimits struct {
+	Attachments AttachmentLimits `json:"attachments"`
+}
+
+type AttachmentLimits struct {
+	PerBoard LimitDetail `json:"perBoard"`
+}
+
+type LimitDetail struct {
+	Status    string `json:"status"`
+	DisableAt int    `json:"disableAt"`
+	WarnAt    int    `json:"warnAt"`
+}
+
+type Membership struct {
+	ID          string `json:"id"`
+	IdMember    string `json:"idMember"`
+	MemberType  string `json:"memberType"`
+	Unconfirmed bool   `json:"unconfirmed"`
+	Deactivated bool   `json:"deactivated"`
+}
+
 type CreateBoardParams struct {
 	Name                 string  `json:"name"`                            // Required. The new name for the board. 1 to 16384 characters long
 	DefaultLabels        *bool   `json:"defaultLabels,omitempty"`         // Determines whether to use the default set of labels. Default: true
