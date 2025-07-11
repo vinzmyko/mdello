@@ -18,16 +18,25 @@ func main() {
 
 	trelloClient := trello.NewTrelloClient(apiKey, token)
 
-	boards := trelloClient.GetBoards()
+	boards, err := trelloClient.GetBoards()
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("Found %d boards\n", len(boards))
 
 	// Replace with desired board id
 	boardId := "686e846f2aee13b00660b241"
-	lists := trelloClient.GetLists(boardId)
+	lists, err := trelloClient.GetLists(boardId)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("Found %d lists\n", len(lists))
 
 	// Replace with desired list id
 	listId := "686e846f2aee13b00660b281"
-	cards := trelloClient.GetCards(listId)
+	cards, err := trelloClient.GetCards(listId)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("Found %d cards\n", len(cards))
 }

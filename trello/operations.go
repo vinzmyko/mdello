@@ -8,61 +8,61 @@ import (
 	"net/url"
 )
 
-func (t TrelloClient) GetBoards() []map[string]any {
+func (t TrelloClient) GetBoards() ([]Board, error) {
 	url := fmt.Sprintf("%s/members/me/boards?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
 
 	r, e := http.Get(url)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	var boards []map[string]any
+	var boards []Board
 
 	e = json.NewDecoder(r.Body).Decode(&boards)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
-	return boards
+	return boards, nil
 }
 
-func (t TrelloClient) GetLists(boardId string) []map[string]any {
+func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 	url := fmt.Sprintf("%s/boards/%s/lists?key=%s&token=%s", t.baseUrl, boardId, t.apiKey, t.token)
 
 	r, e := http.Get(url)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	var lists []map[string]any
+	var lists []List
 
 	e = json.NewDecoder(r.Body).Decode(&lists)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
-	return lists
+	return lists, nil
 }
 
-func (t TrelloClient) GetCards(listId string) []map[string]any {
+func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 	url := fmt.Sprintf("%s/lists/%s/cards?key=%s&token=%s", t.baseUrl, listId, t.apiKey, t.token)
 
 	r, e := http.Get(url)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 	defer r.Body.Close()
 
-	var cards []map[string]any
+	var cards []Card
 
 	e = json.NewDecoder(r.Body).Decode(&cards)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
-	return cards
+	return cards, nil
 }
 
 func (t TrelloClient) CreateBoard(boardName string) error {
