@@ -1,6 +1,6 @@
 package trello
 
-type CreateBoard struct {
+type CreateBoardParams struct {
 	Name                 string  `json:"name"`                            // Required. The new name for the board. 1 to 16384 characters long
 	DefaultLabels        *bool   `json:"defaultLabels,omitempty"`         // Determines whether to use the default set of labels. Default: true
 	DefaultLists         *bool   `json:"defaultLists,omitempty"`          // Determines whether to add the default set of lists (To Do, Doing, Done). Ignored if idBoardSource is provided. Default: true
@@ -19,7 +19,7 @@ type CreateBoard struct {
 	PrefsCardAging       *string `json:"prefs_cardAging,omitempty"`       // The type of card aging. Valid values: pirate, regular. Default: regular
 }
 
-type GetBoard struct {
+type GetBoardParams struct {
 	ID                     string  `json:"id"`                                // Required. The ID of the board to retrieve. Must match pattern: ^[0-9a-fA-F]{24}$
 	Actions                *string `json:"actions,omitempty"`                 // Nested resource for actions. Default: all
 	BoardStars             *string `json:"boardStars,omitempty"`              // Valid values: mine or none. Default: none
@@ -39,7 +39,7 @@ type GetBoard struct {
 	Tags                   *bool   `json:"tags,omitempty"`                    // Include collections/tags that the board belongs to. Default: false
 }
 
-type UpdateBoard struct {
+type UpdateBoardParams struct {
 	ID                       string  `json:"id"`                                  // Required. The ID of the board to retrieve. Must match pattern: ^[0-9a-fA-F]{24}$
 	Name                     *string `json:"name,omitempty"`                      // The new name for the board. 1 to 16384 characters long.
 	Desc                     *string `json:"desc,omitempty"`                      // A new description for the board, 0 to 16384 characters long
@@ -64,19 +64,19 @@ type UpdateBoard struct {
 	LabelNamesBlue           *string `json:"labelNames/blue,omitempty"`
 }
 
-type CreateList struct {
+type CreateListParams struct {
 	Name         string  `json:"name"`                   // Required. Name for the list
 	IdBoard      string  `json:"idBoard"`                // Required. The long ID of the board the list should be created on. Pattern: ^[0-9a-fA-F]{24}$
 	IdListSource *string `json:"idListSource,omitempty"` // ID of the List to copy into the new List. Pattern: ^[0-9a-fA-F]{24}$
 	Pos          *string `json:"pos,omitempty"`          // Position of the list. Valid values: top, bottom, or a positive floating point number
 }
 
-type GetList struct {
+type GetListParams struct {
 	ID     string  `json:"id"`               // Required. The ID of the list
 	Fields *string `json:"fields,omitempty"` // All or a comma separated list of List field names. Default: name,closed,idBoard,pos
 }
 
-type UpdateList struct {
+type UpdateListParams struct {
 	ID         string  `json:"id"`                   // Required. The ID of the list
 	Name       *string `json:"name,omitempty"`       // New name for the list
 	Closed     *bool   `json:"closed,omitempty"`     // Whether the list should be closed (archived)
@@ -85,12 +85,12 @@ type UpdateList struct {
 	Subscribed *bool   `json:"subscribed,omitempty"` // Whether the active member is subscribed to this list
 }
 
-type ArchiveList struct {
+type ArchiveListParams struct {
 	ID    string `json:"id"`    // Required. The ID of the list. Pattern: ^[0-9a-fA-F]{24}$
 	Value bool   `json:"value"` // Required. Set to true to close (archive) the list, false to unarchive
 }
 
-type CreateCard struct {
+type CreateCardParams struct {
 	Name           *string   `json:"name,omitempty"`           // The name for the card
 	Desc           *string   `json:"desc,omitempty"`           // The description for the card
 	Pos            *string   `json:"pos,omitempty"`            // The position of the new card. Valid values: top, bottom, or a positive float
@@ -110,7 +110,7 @@ type CreateCard struct {
 	Coordinates    *string   `json:"coordinates,omitempty"`    // For use with/by the Map View. Should take the form latitude,longitude
 }
 
-type GetCard struct {
+type GetCardParams struct {
 	ID                string  `json:"id"`                           // Required. The ID of the Card. Pattern: ^[0-9a-fA-F]{24}$
 	Fields            *string `json:"fields,omitempty"`             // All or a comma-separated list of fields. Defaults: badges, checkItemStates, closed, dateLastActivity, desc, descData, due, start, idBoard, idChecklists, idLabels, idList, idMembers, idShort, idAttachmentCover, manualCoverAttachment, labels, name, pos, shortUrl, url
 	Actions           *string `json:"actions,omitempty"`            // See the Actions Nested Resource
@@ -132,7 +132,7 @@ type GetCard struct {
 	CustomFieldItems  *bool   `json:"customFieldItems,omitempty"`   // Whether to include the customFieldItems. Default: false
 }
 
-type UpdateCard struct {
+type UpdateCardParams struct {
 	ID                string  `json:"id"`                          // Required. The ID of the card
 	Name              *string `json:"name,omitempty"`              // The new name for the card
 	Desc              *string `json:"desc,omitempty"`              // The new description for the card
