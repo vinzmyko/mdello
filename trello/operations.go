@@ -3,7 +3,6 @@ package trello
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -202,38 +201,40 @@ func (t TrelloClient) DeleteBoard(boardId string) error {
 
 	req, e := http.NewRequest("DELETE", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return err
 	}
 	defer response.Body.Close()
-
-	fmt.Printf("%d\n", response.StatusCode)
 
 	return nil
 }
 
 // this has a value key for if you want to archive it or not
-func (t TrelloClient) ArchiveList(listId string, setArchive bool) error {
+func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error) {
 	url := fmt.Sprintf("%s/lists/%s/closed?value=%t&key=%s&token=%s", t.baseUrl, listId, setArchive, t.apiKey, t.token)
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return nil, err
 	}
 	defer response.Body.Close()
 
-	fmt.Printf("%d\n", response.StatusCode)
+	var list List
+	err = json.NewDecoder(response.Body).Decode(&list)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return &list, nil
 }
 
 func (t TrelloClient) DeleteCard(cardId string) error {
@@ -241,16 +242,14 @@ func (t TrelloClient) DeleteCard(cardId string) error {
 
 	req, e := http.NewRequest("DELETE", url, nil)
 	if e != nil {
-		log.Fatal(e)
+		return e
 	}
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(e)
+		return err
 	}
 	defer response.Body.Close()
-
-	fmt.Printf("%d\n", response.StatusCode)
 
 	return nil
 }
