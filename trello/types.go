@@ -63,3 +63,29 @@ type UpdateBoard struct {
 	LabelNamesPurple         *string `json:"labelNames/purple,omitempty"`
 	LabelNamesBlue           *string `json:"labelNames/blue,omitempty"`
 }
+
+type CreateList struct {
+	Name         string  `json:"name"`                   // Required. Name for the list
+	IdBoard      string  `json:"idBoard"`                // Required. The long ID of the board the list should be created on. Pattern: ^[0-9a-fA-F]{24}$
+	IdListSource *string `json:"idListSource,omitempty"` // ID of the List to copy into the new List. Pattern: ^[0-9a-fA-F]{24}$
+	Pos          *string `json:"pos,omitempty"`          // Position of the list. Valid values: top, bottom, or a positive floating point number
+}
+
+type GetList struct {
+	ID     string  `json:"id"`               // Required. The ID of the list
+	Fields *string `json:"fields,omitempty"` // All or a comma separated list of List field names. Default: name,closed,idBoard,pos
+}
+
+type UpdateList struct {
+	ID         string  `json:"id"`                   // Required. The ID of the list
+	Name       *string `json:"name,omitempty"`       // New name for the list
+	Closed     *bool   `json:"closed,omitempty"`     // Whether the list should be closed (archived)
+	IdBoard    *string `json:"idBoard,omitempty"`    // ID of a board the list should be moved to. Pattern: ^[0-9a-fA-F]{24}$
+	Pos        *string `json:"pos,omitempty"`        // New position for the list: top, bottom, or a positive floating point number
+	Subscribed *bool   `json:"subscribed,omitempty"` // Whether the active member is subscribed to this list
+}
+
+type ArchiveList struct {
+	ID    string `json:"id"`    // Required. The ID of the list. Pattern: ^[0-9a-fA-F]{24}$
+	Value bool   `json:"value"` // Required. Set to true to close (archive) the list, false to unarchive
+}
