@@ -206,6 +206,92 @@ type ArchiveListParams struct {
 	Value bool   `json:"value"` // Required. Set to true to close (archive) the list, false to unarchive
 }
 
+// ========== CARD ==========
+
+type Card struct {
+	ID                    string       `json:"id"`
+	Address               *string      `json:"address"`
+	Badges                CardBadges   `json:"badges"`
+	CheckItemStates       []string     `json:"checkItemStates"`
+	Closed                bool         `json:"closed"`
+	Coordinates           *string      `json:"coordinates"`
+	CreationMethod        *string      `json:"creationMethod"`
+	DateLastActivity      string       `json:"dateLastActivity"`
+	Desc                  string       `json:"desc"`
+	DescData              CardDescData `json:"descData"`
+	Due                   *string      `json:"due"`
+	DueReminder           *string      `json:"dueReminder"`
+	IdBoard               string       `json:"idBoard"`
+	IdChecklists          []string     `json:"idChecklists"`
+	IdLabels              []CardLabel  `json:"idLabels"`
+	IdList                string       `json:"idList"`
+	IdMembers             []string     `json:"idMembers"`
+	IdMembersVoted        []string     `json:"idMembersVoted"`
+	IdShort               int          `json:"idShort"`
+	Labels                []string     `json:"labels"`
+	Limits                CardLimits   `json:"limits"`
+	LocationName          *string      `json:"locationName"`
+	ManualCoverAttachment bool         `json:"manualCoverAttachment"`
+	Name                  string       `json:"name"`
+	Pos                   float64      `json:"pos"`
+	ShortLink             string       `json:"shortLink"`
+	ShortUrl              string       `json:"shortUrl"`
+	Subscribed            bool         `json:"subscribed"`
+	Url                   string       `json:"url"`
+	Cover                 *CardCover   `json:"cover"`
+}
+
+type CardBadges struct {
+	AttachmentsByType  AttachmentsByType `json:"attachmentsByType"`
+	Location           bool              `json:"location"`
+	Votes              int               `json:"votes"`
+	ViewingMemberVoted bool              `json:"viewingMemberVoted"`
+	Subscribed         bool              `json:"subscribed"`
+	Fogbugz            *string           `json:"fogbugz"`
+	CheckItems         int               `json:"checkItems"`
+	CheckItemsChecked  int               `json:"checkItemsChecked"`
+	Comments           int               `json:"comments"`
+	Attachments        int               `json:"attachments"`
+	Description        bool              `json:"description"`
+	Due                *string           `json:"due"`
+	Start              *string           `json:"start"`
+	DueComplete        bool              `json:"dueComplete"`
+}
+
+type AttachmentsByType struct {
+	Trello TrelloAttachments `json:"trello"`
+}
+
+type TrelloAttachments struct {
+	Board int `json:"board"`
+	Card  int `json:"card"`
+}
+
+type CardDescData struct {
+	Emoji map[string]any `json:"emoji"`
+}
+
+type CardLabel struct {
+	ID      string `json:"id"`
+	IdBoard string `json:"idBoard"`
+	Name    string `json:"name"`
+	Color   string `json:"color"`
+}
+
+type CardLimits struct {
+	Attachments AttachmentLimits `json:"attachments"`
+}
+
+type CardCover struct {
+	Color                *string `json:"color"`                // Valid values: pink, yellow, lime, blue, black, orange, red, purple, sky, green
+	IdUploadedBackground *bool   `json:"idUploadedBackground"` // Whether this uses an uploaded background
+	Size                 *string `json:"size"`                 // Valid values: normal, full
+	Brightness           *string `json:"brightness"`           // Valid values: dark, light
+	IsTemplate           *bool   `json:"isTemplate"`           // Whether this is a template
+	Url                  *string `json:"url,omitempty"`
+	IdAttachment         *string `json:"idAttachment,omitempty"`
+}
+
 type CreateCardParams struct {
 	Name           *string   `json:"name,omitempty"`           // The name for the card
 	Desc           *string   `json:"desc,omitempty"`           // The description for the card
@@ -249,30 +335,22 @@ type GetCardParams struct {
 }
 
 type UpdateCardParams struct {
-	ID                string  `json:"id"`                          // Required. The ID of the card
-	Name              *string `json:"name,omitempty"`              // The new name for the card
-	Desc              *string `json:"desc,omitempty"`              // The new description for the card
-	Closed            *bool   `json:"closed,omitempty"`            // Whether the card should be archived (closed: true)
-	IdMembers         *string `json:"idMembers,omitempty"`         // Comma-separated list of member IDs. Pattern: ^[0-9a-fA-F]{24}$
-	IdAttachmentCover *string `json:"idAttachmentCover,omitempty"` // The ID of the image attachment the card should use as its cover, or null for none. Pattern: ^[0-9a-fA-F]{24}$
-	IdList            *string `json:"idList,omitempty"`            // The ID of the list the card should be in. Pattern: ^[0-9a-fA-F]{24}$
-	IdLabels          *string `json:"idLabels,omitempty"`          // Comma-separated list of label IDs. Pattern: ^[0-9a-fA-F]{24}$
-	IdBoard           *string `json:"idBoard,omitempty"`           // The ID of the board the card should be on. Pattern: ^[0-9a-fA-F]{24}$
-	Pos               *string `json:"pos,omitempty"`               // The position of the card in its list. Valid values: top, bottom, or a positive float
-	Due               *string `json:"due,omitempty"`               // When the card is due, or null. Format: date
-	Start             *string `json:"start,omitempty"`             // The start date of a card, or null. Format: date
-	DueComplete       *bool   `json:"dueComplete,omitempty"`       // Whether the status of the card is complete
-	Subscribed        *bool   `json:"subscribed,omitempty"`        // Whether the member should be subscribed to the card
-	Address           *string `json:"address,omitempty"`           // For use with/by the Map View
-	LocationName      *string `json:"locationName,omitempty"`      // For use with/by the Map View
-	Coordinates       *string `json:"coordinates,omitempty"`       // For use with/by the Map View. Should be latitude,longitude
-	Cover             *Cover  `json:"cover,omitempty"`             // Updates the card's cover
-}
-
-type Cover struct {
-	Color        *string `json:"color,omitempty"`        // Valid values: pink, yellow, lime, blue, black, orange, red, purple, sky, green. Makes the cover a solid colour
-	Brightness   *string `json:"brightness,omitempty"`   // Valid values: dark, light. Determines whether the text on the cover should be dark or light
-	Url          *string `json:"url,omitempty"`          // An Unsplash URL: https://images.unsplash.com. Used if making an image the cover
-	IdAttachment *string `json:"idAttachment,omitempty"` // ID of an attachment on the card. Used if setting an attached image as the cover
-	Size         *string `json:"size,omitempty"`         // Valid values: normal, full. Determines whether to show the card name on the cover, or below it
+	ID                string     `json:"id"`                          // Required. The ID of the card
+	Name              *string    `json:"name,omitempty"`              // The new name for the card
+	Desc              *string    `json:"desc,omitempty"`              // The new description for the card
+	Closed            *bool      `json:"closed,omitempty"`            // Whether the card should be archived (closed: true)
+	IdMembers         *string    `json:"idMembers,omitempty"`         // Comma-separated list of member IDs. Pattern: ^[0-9a-fA-F]{24}$
+	IdAttachmentCover *string    `json:"idAttachmentCover,omitempty"` // The ID of the image attachment the card should use as its cover, or null for none. Pattern: ^[0-9a-fA-F]{24}$
+	IdList            *string    `json:"idList,omitempty"`            // The ID of the list the card should be in. Pattern: ^[0-9a-fA-F]{24}$
+	IdLabels          *string    `json:"idLabels,omitempty"`          // Comma-separated list of label IDs. Pattern: ^[0-9a-fA-F]{24}$
+	IdBoard           *string    `json:"idBoard,omitempty"`           // The ID of the board the card should be on. Pattern: ^[0-9a-fA-F]{24}$
+	Pos               *string    `json:"pos,omitempty"`               // The position of the card in its list. Valid values: top, bottom, or a positive float
+	Due               *string    `json:"due,omitempty"`               // When the card is due, or null. Format: date
+	Start             *string    `json:"start,omitempty"`             // The start date of a card, or null. Format: date
+	DueComplete       *bool      `json:"dueComplete,omitempty"`       // Whether the status of the card is complete
+	Subscribed        *bool      `json:"subscribed,omitempty"`        // Whether the member should be subscribed to the card
+	Address           *string    `json:"address,omitempty"`           // For use with/by the Map View
+	LocationName      *string    `json:"locationName,omitempty"`      // For use with/by the Map View
+	Coordinates       *string    `json:"coordinates,omitempty"`       // For use with/by the Map View. Should be latitude,longitude
+	Cover             *CardCover `json:"cover,omitempty"`             // Updates the card's cover
 }
