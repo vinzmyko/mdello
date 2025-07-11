@@ -22,18 +22,16 @@
 - Create TrelloClient in trello.go ✅
 - Trello CRUD operation functions ✅
 - HealthCheck() error { return nil }, for use as a guard clause ✅
+- Create, Read, Update Data Models ✅
 
 ## In Progress
-- Data Models
-    - Instead of `map[string]any`, create proper structs
-    - GetBoard ✅, UpdateBoard ✅, CreateBoard ✅, DeleteBoard ✅
-
-## Queued Up
 - Error handling and robustness
+    - Make functions return created structs not []map[string]any, error
     - Currently, using log.Fatal() everywhere
-    - Make functions return ([]map[string]any, error)
     - Handle HTTP status codes (404, 401, etc.)
     - Add timeout handling?
+
+## Queued Up
 - Basic CLI structure
 
 ## Backlog
