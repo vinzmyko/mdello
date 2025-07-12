@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"github.com/vinzmyko/mdello/trello"
 	"log"
-	"os"
 	"strings"
 )
 
 func main() {
-	apiKey := os.Getenv("TRELLO_API_KEY")
-	token := os.Getenv("TRELLO_TOKEN")
-
-	if strings.TrimSpace(apiKey) == "" || strings.TrimSpace(token) == "" {
-		log.Fatal("Set TRELLO_API_KEY and TRELLO environment variables")
+	if strings.TrimSpace(trelloAPIKey) == "" {
+		log.Fatal("API key not set in secrets.go")
+	}
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Println("No config found. Please run 'mdello init'.")
 	}
 
-	trelloClient := trello.NewTrelloClient(apiKey, token)
+	trelloClient := trello.NewTrelloClient(trelloAPIKey, config.Token)
 
 	boards, err := trelloClient.GetBoards()
 	if err != nil {
