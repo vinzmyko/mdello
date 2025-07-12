@@ -16,8 +16,11 @@ func (t TrelloClient) GetBoards() ([]Board, error) {
 	}
 	defer r.Body.Close()
 
-	var boards []Board
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
 
+	var boards []Board
 	e = json.NewDecoder(r.Body).Decode(&boards)
 	if e != nil {
 		return nil, e
@@ -35,8 +38,11 @@ func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 	}
 	defer r.Body.Close()
 
-	var lists []List
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
 
+	var lists []List
 	e = json.NewDecoder(r.Body).Decode(&lists)
 	if e != nil {
 		return nil, e
@@ -54,8 +60,11 @@ func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 	}
 	defer r.Body.Close()
 
-	var cards []Card
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
 
+	var cards []Card
 	e = json.NewDecoder(r.Body).Decode(&cards)
 	if e != nil {
 		return nil, e
@@ -73,6 +82,10 @@ func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
 		return nil, e
 	}
 	defer r.Body.Close()
+
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
 
 	var board Board
 	e = json.NewDecoder(r.Body).Decode(&board)
@@ -93,6 +106,10 @@ func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
 	}
 	defer r.Body.Close()
 
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
+
 	var list List
 	e = json.NewDecoder(r.Body).Decode(&list)
 	if e != nil {
@@ -111,6 +128,10 @@ func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 		return nil, e
 	}
 	defer r.Body.Close()
+
+	if e := handleHTTPResponse(r); e != nil {
+		return nil, e
+	}
 
 	var card Card
 	e = json.NewDecoder(r.Body).Decode(&card)
@@ -132,16 +153,20 @@ func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) 
 		return nil, e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, e
 	}
 	defer response.Body.Close()
 
+	if e := handleHTTPResponse(response); e != nil {
+		return nil, e
+	}
+
 	var board Board
-	err = json.NewDecoder(response.Body).Decode(&board)
-	if err != nil {
-		return nil, err
+	e = json.NewDecoder(response.Body).Decode(&board)
+	if e != nil {
+		return nil, e
 	}
 
 	return &board, nil
@@ -157,16 +182,20 @@ func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
 		return nil, e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, e
 	}
 	defer response.Body.Close()
 
+	if e := handleHTTPResponse(response); e != nil {
+		return nil, e
+	}
+
 	var list List
-	err = json.NewDecoder(response.Body).Decode(&list)
-	if err != nil {
-		return nil, err
+	e = json.NewDecoder(response.Body).Decode(&list)
+	if e != nil {
+		return nil, e
 	}
 
 	return &list, nil
@@ -181,16 +210,20 @@ func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
 		return nil, e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, e
 	}
 	defer response.Body.Close()
 
+	if e := handleHTTPResponse(response); e != nil {
+		return nil, e
+	}
+
 	var card Card
-	err = json.NewDecoder(response.Body).Decode(&card)
-	if err != nil {
-		return nil, err
+	e = json.NewDecoder(response.Body).Decode(&card)
+	if e != nil {
+		return nil, e
 	}
 
 	return &card, nil
@@ -204,11 +237,15 @@ func (t TrelloClient) DeleteBoard(boardId string) error {
 		return e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return e
 	}
 	defer response.Body.Close()
+
+	if e := handleHTTPResponse(response); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -222,16 +259,20 @@ func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error)
 		return nil, e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, e
 	}
 	defer response.Body.Close()
 
+	if e := handleHTTPResponse(response); e != nil {
+		return nil, e
+	}
+
 	var list List
-	err = json.NewDecoder(response.Body).Decode(&list)
-	if err != nil {
-		return nil, err
+	e = json.NewDecoder(response.Body).Decode(&list)
+	if e != nil {
+		return nil, e
 	}
 
 	return &list, nil
@@ -245,11 +286,15 @@ func (t TrelloClient) DeleteCard(cardId string) error {
 		return e
 	}
 
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return e
 	}
 	defer response.Body.Close()
+
+	if e := handleHTTPResponse(response); e != nil {
+		return e
+	}
 
 	return nil
 }
