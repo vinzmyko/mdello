@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 type TrelloClient struct {
-	apiKey  string
-	token   string
-	baseUrl string
+	apiKey     string
+	token      string
+	baseUrl    string
+	httpClient *http.Client
 }
 
 func NewTrelloClient(apiKey, token string) TrelloClient {
@@ -17,7 +19,14 @@ func NewTrelloClient(apiKey, token string) TrelloClient {
 		token:   token,
 		apiKey:  apiKey,
 		baseUrl: "https://api.trello.com/1",
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
+}
+
+func (t *TrelloClient) SetTimeout(timeout time.Duration) {
+	t.httpClient.Timeout = timeout
 }
 
 func (t TrelloClient) HealthCheck() error {
