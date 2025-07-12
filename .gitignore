@@ -4,5 +4,5 @@ dist/
 *.o
 *.a
 
-# Development script with secrets
-run.ps1
+# Application secrets
+secrets.go
