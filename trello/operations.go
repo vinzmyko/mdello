@@ -12,7 +12,7 @@ func (t TrelloClient) GetBoards() ([]Board, error) {
 
 	r, e := http.Get(url)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -23,7 +23,7 @@ func (t TrelloClient) GetBoards() ([]Board, error) {
 	var boards []Board
 	e = json.NewDecoder(r.Body).Decode(&boards)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return boards, nil
@@ -34,7 +34,7 @@ func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 
 	r, e := http.Get(url)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -45,7 +45,7 @@ func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 	var lists []List
 	e = json.NewDecoder(r.Body).Decode(&lists)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return lists, nil
@@ -56,7 +56,7 @@ func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 
 	r, e := http.Get(url)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -67,7 +67,7 @@ func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 	var cards []Card
 	e = json.NewDecoder(r.Body).Decode(&cards)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return cards, nil
@@ -79,7 +79,7 @@ func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -90,7 +90,7 @@ func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
 	var board Board
 	e = json.NewDecoder(r.Body).Decode(&board)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &board, nil
@@ -102,7 +102,7 @@ func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -113,7 +113,7 @@ func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
 	var list List
 	e = json.NewDecoder(r.Body).Decode(&list)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &list, nil
@@ -125,7 +125,7 @@ func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 
 	r, e := http.Post(url, "application/json", nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer r.Body.Close()
 
@@ -136,7 +136,7 @@ func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 	var card Card
 	e = json.NewDecoder(r.Body).Decode(&card)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &card, nil
@@ -150,12 +150,12 @@ func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) 
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
@@ -166,7 +166,7 @@ func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) 
 	var board Board
 	e = json.NewDecoder(response.Body).Decode(&board)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &board, nil
@@ -179,12 +179,12 @@ func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
@@ -195,7 +195,7 @@ func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
 	var list List
 	e = json.NewDecoder(response.Body).Decode(&list)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &list, nil
@@ -207,12 +207,12 @@ func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
@@ -223,7 +223,7 @@ func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
 	var card Card
 	e = json.NewDecoder(response.Body).Decode(&card)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &card, nil
@@ -234,12 +234,12 @@ func (t TrelloClient) DeleteBoard(boardId string) error {
 
 	req, e := http.NewRequest("DELETE", url, nil)
 	if e != nil {
-		return e
+		return fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return e
+		return fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
@@ -256,12 +256,12 @@ func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error)
 
 	req, e := http.NewRequest("PUT", url, nil)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
@@ -272,7 +272,7 @@ func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error)
 	var list List
 	e = json.NewDecoder(response.Body).Decode(&list)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf("failed to decode response: %w", e)
 	}
 
 	return &list, nil
@@ -283,12 +283,12 @@ func (t TrelloClient) DeleteCard(cardId string) error {
 
 	req, e := http.NewRequest("DELETE", url, nil)
 	if e != nil {
-		return e
+		return fmt.Errorf("failed to create request: %w", e)
 	}
 
 	response, e := http.DefaultClient.Do(req)
 	if e != nil {
-		return e
+		return fmt.Errorf("network error: %w", e)
 	}
 	defer response.Body.Close()
 
