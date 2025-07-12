@@ -10,7 +10,7 @@ import (
 func (t TrelloClient) GetBoards() ([]Board, error) {
 	url := fmt.Sprintf("%s/members/me/boards?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
 
-	r, e := http.Get(url)
+	r, e := t.httpClient.Get(url)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -32,7 +32,7 @@ func (t TrelloClient) GetBoards() ([]Board, error) {
 func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 	url := fmt.Sprintf("%s/boards/%s/lists?key=%s&token=%s", t.baseUrl, boardId, t.apiKey, t.token)
 
-	r, e := http.Get(url)
+	r, e := t.httpClient.Get(url)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -54,7 +54,7 @@ func (t TrelloClient) GetLists(boardId string) ([]List, error) {
 func (t TrelloClient) GetCards(listId string) ([]Card, error) {
 	url := fmt.Sprintf("%s/lists/%s/cards?key=%s&token=%s", t.baseUrl, listId, t.apiKey, t.token)
 
-	r, e := http.Get(url)
+	r, e := t.httpClient.Get(url)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -77,7 +77,7 @@ func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
 	encodedName := url.QueryEscape(boardName)
 	url := fmt.Sprintf("%s/boards/?name=%s&key=%s&token=%s", t.baseUrl, encodedName, t.apiKey, t.token)
 
-	r, e := http.Post(url, "application/json", nil)
+	r, e := t.httpClient.Post(url, "application/json", nil)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -100,7 +100,7 @@ func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
 	encodedName := url.QueryEscape(listName)
 	url := fmt.Sprintf("%s/lists/?name=%s&idBoard=%s&key=%s&token=%s", t.baseUrl, encodedName, boardId, t.apiKey, t.token)
 
-	r, e := http.Post(url, "application/json", nil)
+	r, e := t.httpClient.Post(url, "application/json", nil)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -123,7 +123,7 @@ func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
 	encodedName := url.QueryEscape(cardName)
 	url := fmt.Sprintf("%s/cards/?name=%s&idList=%s&key=%s&token=%s", t.baseUrl, encodedName, listId, t.apiKey, t.token)
 
-	r, e := http.Post(url, "application/json", nil)
+	r, e := t.httpClient.Post(url, "application/json", nil)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -153,7 +153,7 @@ func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) 
 		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -182,7 +182,7 @@ func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
 		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -210,7 +210,7 @@ func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
 		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -237,7 +237,7 @@ func (t TrelloClient) DeleteBoard(boardId string) error {
 		return fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return fmt.Errorf("network error: %w", e)
 	}
@@ -259,7 +259,7 @@ func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error)
 		return nil, fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return nil, fmt.Errorf("network error: %w", e)
 	}
@@ -286,7 +286,7 @@ func (t TrelloClient) DeleteCard(cardId string) error {
 		return fmt.Errorf("failed to create request: %w", e)
 	}
 
-	response, e := http.DefaultClient.Do(req)
+	response, e := t.httpClient.Do(req)
 	if e != nil {
 		return fmt.Errorf("network error: %w", e)
 	}
