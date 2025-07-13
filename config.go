@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/vinzmyko/mdello/trello"
 )
 
 type Config struct {
-	Token string `json:"token"`
+	Token        string        `json:"token"`
+	CurrentBoard *trello.Board `json:"currentBoard"`
 }
 
-func saveConfig(token string) error {
+func saveConfig(config Config) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not find home directory: %w", err)
@@ -22,7 +25,6 @@ func saveConfig(token string) error {
 		return fmt.Errorf("could not create config directory: %w", err)
 	}
 
-	config := Config{Token: token}
 	configFile := filepath.Join(configDir, "config.json")
 
 	data, err := json.MarshalIndent(config, "", "  ")
