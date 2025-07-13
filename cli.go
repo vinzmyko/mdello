@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/vinzmyko/mdello/trello"
 	"os"
 	"strings"
+
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
+	"github.com/vinzmyko/mdello/trello"
 )
 
 var rootCmd = &cobra.Command{
@@ -45,7 +47,6 @@ var initCmd = &cobra.Command{
 			return
 		}
 		fmt.Println("Token saved successfully!")
-		var currentBoard *string = nil
 		boards, err := trelloClient.GetBoards()
 		if err != nil {
 			fmt.Printf("Could not access boards: %v", err)
@@ -54,17 +55,32 @@ var initCmd = &cobra.Command{
 		if len(boards) < 1 {
 			fmt.Println("User has no boards")
 			return
-		} else {
-			// ask user to select a default board
-			fmt.Println("Select a board")
-			for _, board := range boards {
-				fmt.Println(board.Name)
+		}
+
+		var boardOptions []string
+		for _, board := range boards {
+			boardOptions = append(boardOptions, board.Name)
+		}
+
+		var selectedBoardName string
+		boardPrompt := &survey.Select{
+			Message: "Select a board:",
+			Options: boardOptions,
+			VimMode: true,
+		}
+		survey.AskOne(boardPrompt, &selectedBoardName)
+
+		var selectedBoard *trello.Board
+		for _, board := range boards {
+			if board.Name == selectedBoardName {
+				selectedBoard = &board
+				break
 			}
 		}
 
 		config := Config{
 			Token:        token,
-			CurrentBoard: currentBoard,
+			CurrentBoard: selectedBoard,
 		}
 
 		saveConfig(config)
