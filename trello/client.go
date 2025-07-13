@@ -14,8 +14,8 @@ type TrelloClient struct {
 	httpClient *http.Client
 }
 
-func NewTrelloClient(apiKey, token string) TrelloClient {
-	return TrelloClient{
+func NewTrelloClient(apiKey, token string) (*TrelloClient, error) {
+	trelloClient := TrelloClient{
 		token:   token,
 		apiKey:  apiKey,
 		baseUrl: "https://api.trello.com/1",
@@ -23,6 +23,13 @@ func NewTrelloClient(apiKey, token string) TrelloClient {
 			Timeout: 10 * time.Second,
 		},
 	}
+
+	err := trelloClient.HealthCheck()
+	if err != nil {
+		return nil, fmt.Errorf("Invalid Trello Token: %w", err)
+	}
+
+	return &trelloClient, nil
 }
 
 func (t *TrelloClient) SetTimeout(timeout time.Duration) {
@@ -32,7 +39,7 @@ func (t *TrelloClient) SetTimeout(timeout time.Duration) {
 func (t TrelloClient) HealthCheck() error {
 	url := fmt.Sprintf("%s/members/me/?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
 
-	r, e := http.Get(url)
+	r, e := t.httpClient.Get(url)
 	if e != nil {
 		log.Fatal(e)
 	}
