@@ -2,22 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/vinzmyko/mdello/trello"
 	"log"
 	"strings"
+
+	"github.com/vinzmyko/mdello/cli"
+	"github.com/vinzmyko/mdello/config"
+	"github.com/vinzmyko/mdello/trello"
 )
 
 func main() {
 	if strings.TrimSpace(trelloAPIKey) == "" {
 		log.Fatal("API key not set in secrets.go")
 	}
-	config, err := loadConfig()
+	config, err := config.LoadConfig()
 	if err != nil {
 		fmt.Println("No config found. Please run 'mdello init'.")
-		Execute()
+		cli.Execute(trelloAPIKey)
 		return
 	}
-	Execute()
+	cli.Execute(trelloAPIKey)
 
 	trelloClient, err := trello.NewTrelloClient(trelloAPIKey, config.Token)
 	if err != nil {
