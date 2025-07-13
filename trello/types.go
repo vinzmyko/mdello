@@ -223,12 +223,12 @@ type Card struct {
 	DueReminder           *string      `json:"dueReminder"`
 	IdBoard               string       `json:"idBoard"`
 	IdChecklists          []string     `json:"idChecklists"`
-	IdLabels              []CardLabel  `json:"idLabels"`
+	IdLabels              []string     `json:"idLabels"`
 	IdList                string       `json:"idList"`
 	IdMembers             []string     `json:"idMembers"`
 	IdMembersVoted        []string     `json:"idMembersVoted"`
 	IdShort               int          `json:"idShort"`
-	Labels                []string     `json:"labels"`
+	Labels                []CardLabel  `json:"labels"`
 	Limits                CardLimits   `json:"limits"`
 	LocationName          *string      `json:"locationName"`
 	ManualCoverAttachment bool         `json:"manualCoverAttachment"`
@@ -272,10 +272,13 @@ type CardDescData struct {
 }
 
 type CardLabel struct {
-	ID      string `json:"id"`
-	IdBoard string `json:"idBoard"`
-	Name    string `json:"name"`
-	Color   string `json:"color"`
+	ID             string `json:"id"`
+	IdBoard        string `json:"idBoard"`
+	IdOrganization string `json:"idOrganization"`
+	Name           string `json:"name"`
+	NodeId         string `json:"nodeId"`
+	Color          string `json:"color"`
+	Uses           int    `json:"uses"`
 }
 
 type CardLimits struct {
