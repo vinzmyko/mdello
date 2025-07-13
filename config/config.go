@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ type Config struct {
 	CurrentBoard *trello.Board `json:"currentBoard"`
 }
 
-func saveConfig(config Config) error {
+func SaveConfig(config Config) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not find home directory: %w", err)
@@ -35,7 +35,7 @@ func saveConfig(config Config) error {
 	return os.WriteFile(configFile, data, 0600) // 0600 = owner read/write only, only current user can read/write
 }
 
-func loadConfig() (*Config, error) {
+func LoadConfig() (*Config, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("could not find home directory: %w", err)
