@@ -68,7 +68,11 @@ var initCmd = &cobra.Command{
 			Options: boardOptions,
 			VimMode: true,
 		}
-		survey.AskOne(boardPrompt, &selectedBoardName)
+		err = survey.AskOne(boardPrompt, &selectedBoardName)
+		if err != nil {
+			fmt.Println("\nBoard selection cancelled.")
+			return
+		}
 
 		var selectedBoard *trello.Board
 		for _, board := range boards {
@@ -76,6 +80,10 @@ var initCmd = &cobra.Command{
 				selectedBoard = &board
 				break
 			}
+		}
+		if selectedBoard == nil {
+			fmt.Println("Error: selected board not found")
+			return
 		}
 
 		config := Config{
@@ -87,7 +95,7 @@ var initCmd = &cobra.Command{
 	},
 }
 
-var getBoardsCmd = &cobra.Command{
+var boardsCmd = &cobra.Command{
 	Use:   "boards",
 	Short: "Get all current users boards",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -99,20 +107,59 @@ var getBoardsCmd = &cobra.Command{
 		}
 
 		trelloClient, err := trello.NewTrelloClient(trelloAPIKey, config.Token)
+		if err != nil {
+			fmt.Println(err)
+		}
 		boards, err := trelloClient.GetBoards()
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		for _, board := range boards {
-			fmt.Printf("%s\n", board.Name)
+		if config.CurrentBoard != nil {
+			fmt.Printf("Current board: %s\n\n", config.CurrentBoard.Name)
+		} else {
+			fmt.Println("No current board set")
 		}
+		var boardOptions []string
+		for _, board := range boards {
+			boardOptions = append(boardOptions, board.Name)
+		}
+
+		var selectedBoardName string
+		boardPrompt := &survey.Select{
+			Message: "Select a board:",
+			Options: boardOptions,
+			VimMode: true,
+		}
+		err = survey.AskOne(boardPrompt, &selectedBoardName)
+		if err != nil {
+			fmt.Println("\nBoard selection cancelled.")
+			return
+		}
+		var selectedBoard *trello.Board
+		for _, board := range boards {
+			if board.Name == selectedBoardName {
+				selectedBoard = &board
+				break
+			}
+		}
+		if selectedBoard == nil {
+			fmt.Println("Error: selected board not found")
+			return
+		}
+
+		newConfig := Config{
+			Token:        config.Token,
+			CurrentBoard: selectedBoard,
+		}
+
+		saveConfig(newConfig)
 	},
 }
 
 func Execute() {
 	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(getBoardsCmd)
+	rootCmd.AddCommand(boardsCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
