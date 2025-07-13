@@ -14,9 +14,15 @@ func main() {
 	config, err := loadConfig()
 	if err != nil {
 		fmt.Println("No config found. Please run 'mdello init'.")
+		Execute()
+		return
 	}
+	Execute()
 
-	trelloClient := trello.NewTrelloClient(trelloAPIKey, config.Token)
+	trelloClient, err := trello.NewTrelloClient(trelloAPIKey, config.Token)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	boards, err := trelloClient.GetBoards()
 	if err != nil {
