@@ -35,11 +35,14 @@
     - `mdello boards`
         - change config.currentBoards → to new selected one like in railway ✅
     - Feature like `git rebase -i` that opens a new window ✅
-    - Refactor cli.go to have multiple files
+    - Refactor cli.go to have multiple files ✅
     - Get all the board data into the new file
-        - Show current board name, list names with cards, cards with checklists
+        - Show current board name ✅, list names with cards ✅, cards with checklists ✅
+            - What do I want information do I want to convey for the Card?
+                - Labels ✅, due date ✅
+        - The `[x]` and `[]` implemented on the cards ✅
+    - Figure out how to parse the markdown into data that we can send to the trello api
         - Implement the movement of lists and cards when you move them in the editor
-        - The `[x]` and `[]` implemented on the cards
         - If there are not invalid commands ask the user to fix it
 
 ## Queued Up
