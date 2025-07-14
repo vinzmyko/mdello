@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/vinzmyko/mdello/config"
 )
 
 var rootCmd = &cobra.Command{
@@ -17,9 +18,11 @@ var rootCmd = &cobra.Command{
 }
 
 var apiKey string
+var cfg *config.Config
 
-func Execute(trelloAPIKey string) {
+func Execute(trelloAPIKey string, configuration *config.Config) {
 	apiKey = trelloAPIKey
+	cfg = configuration
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(boardsCmd)

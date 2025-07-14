@@ -16,8 +16,9 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialise mdello with your Trello token",
 	Run: func(cmd *cobra.Command, args []string) {
-		if _, err := config.LoadConfig(); err == nil {
+		if cfg != nil && cfg.Token != "" {
 			fmt.Print("Configuration already exists. Overwrite? (y/N): ")
+
 			reader := bufio.NewReader(os.Stdin)
 			response, _ := reader.ReadString('\n')
 			response = strings.TrimSpace(strings.ToLower(response))

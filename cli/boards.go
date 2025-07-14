@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
@@ -14,14 +13,12 @@ var boardsCmd = &cobra.Command{
 	Use:   "boards",
 	Short: "Get all current users boards",
 	Run: func(cmd *cobra.Command, args []string) {
-		configuration, err := config.LoadConfig()
-		if err != nil {
-			fmt.Println("No config found. Please run 'mdello init'.")
-			os.Exit(1)
+		if cfg == nil || cfg.Token == "" {
+			fmt.Println("No valid configuration found. Please run 'mdello init'.")
 			return
 		}
 
-		trelloClient, err := trello.NewTrelloClient(apiKey, configuration.Token)
+		trelloClient, err := trello.NewTrelloClient(apiKey, cfg.Token)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -30,8 +27,8 @@ var boardsCmd = &cobra.Command{
 			fmt.Println(err)
 		}
 
-		if configuration.CurrentBoard != nil {
-			fmt.Printf("Current board: %s\n\n", configuration.CurrentBoard.Name)
+		if cfg.CurrentBoard != nil {
+			fmt.Printf("Current board: %s\n\n", cfg.CurrentBoard.Name)
 		} else {
 			fmt.Println("No current board set")
 		}
@@ -64,7 +61,7 @@ var boardsCmd = &cobra.Command{
 		}
 
 		newConfig := config.Config{
-			Token:        configuration.Token,
+			Token:        cfg.Token,
 			CurrentBoard: selectedBoard,
 		}
 
