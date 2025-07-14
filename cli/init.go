@@ -78,9 +78,27 @@ var initCmd = &cobra.Command{
 			return
 		}
 
+		dateFormats := []string{
+			"International: YYYY-MM-DD",
+			"US: MM-DD-YYYY",
+			"EU: DD-MM-YYYY",
+		}
+		var selectedDateFormat string
+		boardPrompt = &survey.Select{
+			Message: "Select a date format:",
+			Options: dateFormats,
+			VimMode: true,
+		}
+		err = survey.AskOne(boardPrompt, &selectedDateFormat)
+		if err != nil {
+			fmt.Println("\nDate format selection cancelled.")
+			return
+		}
+
 		newConfig := config.Config{
 			Token:        token,
 			CurrentBoard: selectedBoard,
+			DateFormat:   selectedDateFormat,
 		}
 
 		config.SaveConfig(newConfig)
