@@ -96,12 +96,12 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		newConfig := config.Config{
+		cfg := &config.Config{
 			Token:        token,
 			CurrentBoard: selectedBoard,
 			DateFormat:   selectedDateFormat,
 		}
 
-		config.SaveConfig(newConfig)
+		config.SaveConfig(*cfg)
 	},
 }

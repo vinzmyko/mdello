@@ -55,3 +55,19 @@ func LoadConfig() (*Config, error) {
 
 	return &config, nil
 }
+
+func (cfg *Config) UpdateToken(newToken string) {
+	cfg.Token = newToken
+}
+
+func (cfg *Config) UpdateCurrentBoard(newBoard *trello.Board) {
+	cfg.CurrentBoard = newBoard
+}
+
+func (cfg *Config) UpdateDateFormat(newDateFormat string) {
+	cfg.DateFormat = newDateFormat
+}
+
+func (cfg *Config) Save() error {
+	return SaveConfig(*cfg)
+}

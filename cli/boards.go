@@ -5,7 +5,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	"github.com/vinzmyko/mdello/config"
 	"github.com/vinzmyko/mdello/trello"
 )
 
@@ -21,10 +20,12 @@ var boardsCmd = &cobra.Command{
 		trelloClient, err := trello.NewTrelloClient(apiKey, cfg.Token)
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 		boards, err := trelloClient.GetBoards()
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 
 		if cfg.CurrentBoard != nil {
@@ -60,11 +61,13 @@ var boardsCmd = &cobra.Command{
 			return
 		}
 
-		newConfig := config.Config{
-			Token:        cfg.Token,
-			CurrentBoard: selectedBoard,
-		}
+		cfg.UpdateCurrentBoard(selectedBoard)
 
-		config.SaveConfig(newConfig)
+		err = cfg.Save()
+		if err != nil {
+			fmt.Printf("Error saving configuration: %v\n", err)
+			return
+		}
+		fmt.Printf("Current board updated to: %s\n", selectedBoard.Name)
 	},
 }
