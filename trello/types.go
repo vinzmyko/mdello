@@ -220,7 +220,7 @@ type Card struct {
 	Desc                  string       `json:"desc"`
 	DescData              CardDescData `json:"descData"`
 	Due                   *string      `json:"due"`
-	DueReminder           *string      `json:"dueReminder"`
+	DueReminder           *int64       `json:"dueReminder"`
 	IdBoard               string       `json:"idBoard"`
 	IdChecklists          []string     `json:"idChecklists"`
 	IdLabels              []string     `json:"idLabels"`
