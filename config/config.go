@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Token        string        `json:"token"`
 	CurrentBoard *trello.Board `json:"currentBoard"`
+	DateFormat   string        `json:"DateFormat"`
 }
 
 func SaveConfig(config Config) error {
