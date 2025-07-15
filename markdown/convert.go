@@ -51,13 +51,5 @@ func formatDate(card trello.Card, configuration *config.Config) string {
 		return ""
 	}
 
-	dateFormat := configuration.DateFormat
-	switch {
-	case strings.Contains(dateFormat, "MM-DD-YYYY"):
-		return parsedTime.Format("01-02-2006 15:04")
-	case strings.Contains(dateFormat, "DD-MM-YYYY"):
-		return parsedTime.Format("02-01-2006 15:04")
-	default:
-		return parsedTime.Format("2006-01-02 15:04")
-	}
+	return parsedTime.Format(configuration.DateFormat)
 }

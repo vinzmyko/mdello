@@ -9,6 +9,17 @@ import (
 	"github.com/vinzmyko/mdello/trello"
 )
 
+const (
+	DateFormatISO = "2006-01-02 15:04"
+	DateFormatUS  = "01-02-2006 15:04"
+	DateFormatEU  = "02-01-2006 15:04"
+)
+
+type DateFormatOption struct {
+	Display string
+	Value   string
+}
+
 type Config struct {
 	Token        string        `json:"token"`
 	CurrentBoard *trello.Board `json:"currentBoard"`
@@ -70,4 +81,30 @@ func (cfg *Config) UpdateDateFormat(newDateFormat string) {
 
 func (cfg *Config) Save() error {
 	return SaveConfig(*cfg)
+}
+
+func GetDateFormatOptions() []DateFormatOption {
+	return []DateFormatOption{
+		{"International (YYYY-MM-DD)", DateFormatISO},
+		{"US (MM-DD-YYYY)", DateFormatUS},
+		{"European (DD-MM-YYYY)", DateFormatEU},
+	}
+}
+
+func GetDisplayOptions() []string {
+	options := GetDateFormatOptions()
+	displays := make([]string, len(options))
+	for i, option := range options {
+		displays[i] = option.Display
+	}
+	return displays
+}
+
+func GetFormatFromDisplay(display string) (string, bool) {
+	for _, option := range GetDateFormatOptions() {
+		if option.Display == display {
+			return option.Value, true
+		}
+	}
+	return "", false
 }
