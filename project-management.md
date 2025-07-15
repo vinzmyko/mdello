@@ -45,9 +45,37 @@
         - Implement the movement of lists and cards when you move them in the editor
         - If there are not invalid commands ask the user to fix it
 
+// How cards are structured example
+card title:vinzmykodelrosario
+        id:b293
+        status:[x]
+        position:0
+        listID:b281
+        due date:17-07-2025 15:47
+        labels:
+                test
+                vinz
+
+
+- Add id generation to ConvertToMarkdown() ✅
+    - Add shortId helper func ✅
+    - Edit all trello objects to include ids ✅
+- Create Basic parser structure
+    - scan line by line for board, lists, card ✅
+    - handle edge cases for regex carefully ✅
+- Extend parser.go to extract the ids ✅
+- Create structure based on markdown file ✅
+- Clean up the board.go file and parser.go file and commit ✅
+- Compare the original markdown file struct vs the editted markdown file
+    - What are the changes from the original and the editted version
+- Simple name changes
+- Moving cards
+
 ## Queued Up
-- When trello.go gets too big separate into new dir/ with lists.go, cards.go
+- Show all the labels the board has and when you add `- @labelName` you can then add it in the cards underneath
+    - To avoid errors we need to process the label changes first and then apply them to the cards
 
 ## Backlog
+- When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
 - Update the operations.go to use the Params structs at input parameters
 - Refactor operations.go functions to use helper functions as similar code for each: createrequest, request, response
