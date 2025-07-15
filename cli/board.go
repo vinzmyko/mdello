@@ -1,41 +1,52 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/vinzmyko/mdello/config"
+	"github.com/vinzmyko/mdello/markdown"
+	"github.com/vinzmyko/mdello/trello"
 )
 
 var boardCmd = &cobra.Command{
 	Use:   "board",
 	Short: "Edit current board via markdown file",
 	Run: func(cmd *cobra.Command, args []string) {
-		configurtaion, err := config.LoadConfig()
-		if err != nil {
-			fmt.Println("No config found. Please run 'mdello init'.")
-			os.Exit(1)
-			return
-		}
-		if configurtaion.CurrentBoard == nil {
-			fmt.Println("No current board set. Please run 'mdello boards' to select a board.")
+		if cfg == nil || cfg.Token == "" || cfg.CurrentBoard == nil {
+			fmt.Println("No valid cfg found. Please run 'mdello init'.")
 			return
 		}
 
-		currentBoard := configurtaion.CurrentBoard
+		trelloClient, err := trello.NewTrelloClient(apiKey, cfg.Token)
 
-		tempFile, err := os.CreateTemp("", "mdello-board-*.md")
+		currentBoard := cfg.CurrentBoard
+
+		safeName := strings.ReplaceAll(currentBoard.Name, " ", "~")
+		safeName = strings.ReplaceAll(safeName, "/", "~")
+		tempFileName := fmt.Sprintf("mdello-%s-*.md", safeName)
+		tempFile, err := os.CreateTemp("", tempFileName)
 		if err != nil {
 			fmt.Printf("Error creating temp file: %v\n", err)
 			return
 		}
 		defer os.Remove(tempFile.Name())
 
-		// Write some placeholder content
-		originalContent := fmt.Sprintf("# %s\n\n## To Do\n- [ ] Example task\n", currentBoard.Name)
+		originalContent, err := markdown.ConvertToMarkdown(trelloClient, cfg, currentBoard)
+		if err != nil {
+			fmt.Printf("Coverting to markdown failed: %v", err)
+		}
+
+		originalReader := strings.NewReader(originalContent)
+		originalBoard, err := markdown.ParseMarkdown(originalReader)
+		if err != nil {
+			fmt.Printf("Error parsing original markdown: %v\n", err)
+			return
+		}
+
 		tempFile.WriteString(originalContent)
 		tempFile.Close()
 
@@ -80,13 +91,24 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
+		// check edited content
+		reader := bytes.NewReader(editedContent)
+
+		edittedBoard, err := markdown.ParseMarkdown(reader)
+		if err != nil {
+			fmt.Printf("Error parsing markdown: %v\n", err)
+			return
+		}
+
 		if !afterStat.ModTime().After(beforeStat.ModTime()) {
 			fmt.Println("File was not saved. Aborting.")
 			return
 		}
 
-		fmt.Println("Board edited successfully!")
+		fmt.Println("\nBoard edited successfully!")
 		fmt.Printf("Changes detected: %d bytes\n", len(editedContent))
+
+		markdown.DetectChanges(originalBoard, edittedBoard)
 	},
 }
 
