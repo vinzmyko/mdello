@@ -20,37 +20,49 @@ var initCmd = &cobra.Command{
 			fmt.Print("Configuration already exists. Overwrite? (y/N): ")
 
 			reader := bufio.NewReader(os.Stdin)
-			response, _ := reader.ReadString('\n')
+			response, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Println() // For consistent UX line breaks on Ctrl+c & wrong input
+				printCancelled()
+				return
+			}
 			response = strings.TrimSpace(strings.ToLower(response))
 
 			if response != "y" && response != "yes" {
-				fmt.Println("'mdello init' cancelled.")
+				printCancelled()
 				return
 			}
 		}
 
 		fmt.Println("Enter your Trello Token: ")
 		reader := bufio.NewReader(os.Stdin)
-		token, _ := reader.ReadString('\n')
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			printCancelled()
+			return
+		}
 		token = strings.TrimSpace(token)
 
 		trelloClient, err := trello.NewTrelloClient(apiKey, token)
 		if err != nil {
-			fmt.Println("Token was invalid please try again")
+			fmt.Println("\nThe provided token was invalid. Please try again.")
+			fmt.Println()
 			return
 		}
-		fmt.Println("Token saved successfully!")
+		fmt.Println("Token registered successfully!")
 		boards, err := trelloClient.GetBoards()
 		if err != nil {
-			fmt.Printf("Could not access boards: %v", err)
+			fmt.Printf("\nCould not access boards: %v", err)
+			fmt.Println()
 			return
 		}
 		if len(boards) < 1 {
-			fmt.Println("User has no boards")
+			fmt.Println("\nUser has no boards")
+			fmt.Println()
 			return
 		}
 
-		var boardOptions []string
+		boardOptions := make([]string, 0, len(boards))
 		for _, board := range boards {
 			boardOptions = append(boardOptions, board.Name)
 		}
@@ -63,7 +75,7 @@ var initCmd = &cobra.Command{
 		}
 		err = survey.AskOne(boardPrompt, &selectedBoardName)
 		if err != nil {
-			fmt.Println("\nBoard selection cancelled.")
+			printStepCancelled("Current board")
 			return
 		}
 
@@ -75,9 +87,11 @@ var initCmd = &cobra.Command{
 			}
 		}
 		if selectedBoard == nil {
-			fmt.Println("Error: selected board not found")
+			fmt.Println("\nError: selected board not found")
+			fmt.Println()
 			return
 		}
+		fmt.Printf("\n%s selected.", selectedBoardName)
 
 		var selectedDateFormatDisplay string
 		boardPrompt = &survey.Select{
@@ -87,19 +101,43 @@ var initCmd = &cobra.Command{
 		}
 		err = survey.AskOne(boardPrompt, &selectedDateFormatDisplay)
 		if err != nil {
-			fmt.Println("\nDate format selection cancelled.")
+			printStepCancelled("Date format")
+			return
 		}
 		actualDateFormat, found := config.GetFormatFromDisplay(selectedDateFormatDisplay)
 		if !found {
+			fmt.Println("\nError: Invalid date format selected")
+			fmt.Println()
 			return
 		}
+		fmt.Printf("\n%s selected.", selectedDateFormatDisplay)
 
 		cfg := &config.Config{
 			Token:        token,
 			CurrentBoard: selectedBoard,
 			DateFormat:   actualDateFormat,
 		}
+		fmt.Println("\nAll options have successfully been saved!")
+		fmt.Println()
 
-		config.SaveConfig(*cfg)
+		err = config.SaveConfig(*cfg)
+		if err != nil {
+			fmt.Printf("\nError: Could not save configuration: %v\n", err)
+			fmt.Println()
+			return
+		}
 	},
+}
+
+func printCancelled() {
+	fmt.Println()
+	fmt.Println("'mdello init' cancelled.")
+	fmt.Println()
+}
+
+func printStepCancelled(selection string) {
+	fmt.Println()
+	fmt.Printf("%s selection cancelled.\n", selection)
+	fmt.Println("Previous options will not be saved.")
+	fmt.Println()
 }
