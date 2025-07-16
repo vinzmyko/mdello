@@ -203,7 +203,7 @@ type UpdateListParams struct {
 
 type ArchiveListParams struct {
 	ID    string `json:"id"`    // Required. The ID of the list. Pattern: ^[0-9a-fA-F]{24}$
-	Value bool   `json:"value"` // Required. Set to true to close (archive) the list, false to unarchive
+	Value *bool  `json:"value"` // Required. Set to true to close (archive) the list, false to unarchive
 }
 
 // ========== CARD ==========
