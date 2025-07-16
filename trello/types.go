@@ -296,13 +296,13 @@ type CardCover struct {
 }
 
 type CreateCardParams struct {
+	IdList         string    `json:"idList"`                   // Required. The ID of the list the card should be created in. Pattern: ^[0-9a-fA-F]{24}$
 	Name           *string   `json:"name,omitempty"`           // The name for the card
 	Desc           *string   `json:"desc,omitempty"`           // The description for the card
 	Pos            *string   `json:"pos,omitempty"`            // The position of the new card. Valid values: top, bottom, or a positive float
 	Due            *string   `json:"due,omitempty"`            // A due date for the card. Format: date
 	Start          *string   `json:"start,omitempty"`          // The start date of a card, or null. Format: date
 	DueComplete    *bool     `json:"dueComplete,omitempty"`    // Whether the status of the card is complete
-	IdList         string    `json:"idList"`                   // Required. The ID of the list the card should be created in. Pattern: ^[0-9a-fA-F]{24}$
 	IdMembers      *[]string `json:"idMembers,omitempty"`      // Comma-separated list of member IDs to add to the card
 	IdLabels       *[]string `json:"idLabels,omitempty"`       // Comma-separated list of label IDs to add to the card
 	UrlSource      *string   `json:"urlSource,omitempty"`      // A URL starting with http:// or https://. The URL will be attached to the card upon creation
