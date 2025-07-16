@@ -5,7 +5,105 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
 )
+
+func paramsToURLValues(params any) (url.Values, error) {
+	values := url.Values{}
+	structData := reflect.ValueOf(params)
+
+	if structData.Kind() == reflect.Ptr {
+		structData = structData.Elem()
+	}
+
+	if structData.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("params must be a struct. Got %T", params)
+	}
+
+	structInfo := structData.Type()
+	for i := 0; i < structData.NumField(); i++ {
+		// structData contains the actual values in a list, structInfo contains the corresponding types
+		field := structData.Field(i)
+		fieldType := structInfo.Field(i)
+
+		tag := fieldType.Tag.Get("json")
+		if tag == "" || tag == "-" {
+			continue
+		}
+
+		key := strings.Split(tag, ",")[0]
+		if key == "id" {
+			continue
+		}
+
+		// If field is nil we do not want to add it to strValue
+		if field.Kind() == reflect.Ptr {
+			if field.IsNil() {
+				continue
+			}
+			field = field.Elem()
+		}
+
+		var strValue string
+		switch field.Kind() {
+		case reflect.String:
+			strValue = field.String()
+		case reflect.Bool:
+			strValue = strconv.FormatBool(field.Bool())
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			strValue = strconv.FormatInt(field.Int(), 10)
+		default:
+			continue
+		}
+
+		values.Set(key, strValue)
+	}
+
+	return values, nil
+}
+
+func (t *TrelloClient) doRequest(method, path string, queryParams url.Values, result any) error {
+	fullURL, err := url.JoinPath(t.baseUrl, path)
+	if err != nil {
+		return fmt.Errorf("failed to create URL path: %w", err)
+	}
+
+	req, err := http.NewRequest(method, fullURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	query := req.URL.Query()
+	query.Set("key", t.apiKey)
+	query.Set("token", t.token)
+
+	for key, vals := range queryParams {
+		for _, val := range vals {
+			query.Add(key, val)
+		}
+	}
+	req.URL.RawQuery = query.Encode()
+
+	response, err := t.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("network error: %w", err)
+	}
+	defer response.Body.Close()
+
+	if err := handleHTTPResponse(response); err != nil {
+		return err
+	}
+
+	if result != nil {
+		if err = json.NewDecoder(response.Body).Decode(result); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+	}
+
+	return nil
+}
 
 func (t TrelloClient) GetBoards() ([]Board, error) {
 	url := fmt.Sprintf("%s/members/me/boards?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
