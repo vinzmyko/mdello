@@ -2,6 +2,7 @@ package trello
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -93,7 +94,7 @@ func (t *TrelloClient) doRequest(method, path string, queryParams url.Values, re
 	defer response.Body.Close()
 
 	if err := handleHTTPResponse(response); err != nil {
-		return err
+		return fmt.Errorf("failed to handle http response: %w", err)
 	}
 
 	if result != nil {
@@ -105,293 +106,209 @@ func (t *TrelloClient) doRequest(method, path string, queryParams url.Values, re
 	return nil
 }
 
-func (t TrelloClient) GetBoards() ([]Board, error) {
-	url := fmt.Sprintf("%s/members/me/boards?key=%s&token=%s", t.baseUrl, t.apiKey, t.token)
-
-	r, e := t.httpClient.Get(url)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
-	}
-	defer r.Body.Close()
-
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
-	}
-
+func (t *TrelloClient) GetBoards() ([]Board, error) {
 	var boards []Board
-	e = json.NewDecoder(r.Body).Decode(&boards)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
 
+	err := t.doRequest("GET", "/members/me/boards", nil, &boards)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user boards: %w", err)
+	}
 	return boards, nil
 }
 
-func (t TrelloClient) GetLists(boardId string) ([]List, error) {
-	url := fmt.Sprintf("%s/boards/%s/lists?key=%s&token=%s", t.baseUrl, boardId, t.apiKey, t.token)
-
-	r, e := t.httpClient.Get(url)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
-	}
-	defer r.Body.Close()
-
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
+func (t *TrelloClient) GetLists(boardId string) ([]List, error) {
+	if boardId == "" {
+		return nil, errors.New("boardId is required to get lists")
 	}
 
 	var lists []List
-	e = json.NewDecoder(r.Body).Decode(&lists)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
 
+	path := fmt.Sprintf("/boards/%s/lists", boardId)
+	err := t.doRequest("GET", path, nil, &lists)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lists for board %s: %w", boardId, err)
+	}
 	return lists, nil
 }
 
-func (t TrelloClient) GetCards(listId string) ([]Card, error) {
-	url := fmt.Sprintf("%s/lists/%s/cards?key=%s&token=%s", t.baseUrl, listId, t.apiKey, t.token)
-
-	r, e := t.httpClient.Get(url)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
+func (t *TrelloClient) GetCards(listId string) ([]Card, error) {
+	if listId == "" {
+		return nil, errors.New("listId is required to get cards")
 	}
-	defer r.Body.Close()
-
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
-	}
-
 	var cards []Card
-	e = json.NewDecoder(r.Body).Decode(&cards)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
 
+	path := fmt.Sprintf("/lists/%s/cards", listId)
+	err := t.doRequest("GET", path, nil, &cards)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cards for list %s: %w", listId, err)
+	}
 	return cards, nil
 }
 
-func (t TrelloClient) CreateBoard(boardName string) (*Board, error) {
-	encodedName := url.QueryEscape(boardName)
-	url := fmt.Sprintf("%s/boards/?name=%s&key=%s&token=%s", t.baseUrl, encodedName, t.apiKey, t.token)
-
-	r, e := t.httpClient.Post(url, "application/json", nil)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
+func (t *TrelloClient) CreateBoard(params *CreateBoardParams) (*Board, error) {
+	if params == nil || params.Name == "" {
+		return nil, errors.New("CreateBoardParams with a Name is required")
 	}
-	defer r.Body.Close()
 
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process create board params: %w", err)
 	}
 
 	var board Board
-	e = json.NewDecoder(r.Body).Decode(&board)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
+
+	err = t.doRequest("POST", "/boards", queryParams, &board)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trello board: %w", err)
+	}
+	return &board, nil
+}
+
+func (t *TrelloClient) CreateList(params *CreateListParams) (*List, error) {
+	if params == nil || params.Name == "" || params.IdBoard == "" {
+		return nil, errors.New("CreateListParams required Name and IdBoard")
+	}
+
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process create list params: %w", err)
+	}
+
+	var list List
+
+	err = t.doRequest("POST", "/lists", queryParams, &list)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trello list: %w", err)
+	}
+	return &list, nil
+}
+
+func (t *TrelloClient) CreateCard(params *CreateCardParams) (*Card, error) {
+	if params == nil || params.IdList == "" {
+		return nil, errors.New("CreateCardParams with a IdList is required")
+	}
+
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process create card params: %w", err)
+	}
+
+	var card Card
+
+	err = t.doRequest("POST", "/cards", queryParams, &card)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trello card: %w", err)
+	}
+	return &card, nil
+}
+
+func (t *TrelloClient) UpdateBoard(params *UpdateBoardParams) (*Board, error) {
+	if params == nil || params.ID == "" {
+		return nil, errors.New("UpdateBoardParams with a valid ID is required")
+	}
+
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process update board params: %w", err)
+	}
+
+	path := fmt.Sprintf("/boards/%s", params.ID)
+
+	var board Board
+	err = t.doRequest("PUT", path, queryParams, &board)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update trello board: %w", err)
 	}
 
 	return &board, nil
 }
 
-func (t TrelloClient) CreateList(listName, boardId string) (*List, error) {
-	encodedName := url.QueryEscape(listName)
-	url := fmt.Sprintf("%s/lists/?name=%s&idBoard=%s&key=%s&token=%s", t.baseUrl, encodedName, boardId, t.apiKey, t.token)
-
-	r, e := t.httpClient.Post(url, "application/json", nil)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
+func (t *TrelloClient) UpdateList(params *UpdateListParams) (*List, error) {
+	if params == nil || params.ID == "" {
+		return nil, errors.New("UpdateListParams with a valid ID is required")
 	}
-	defer r.Body.Close()
 
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process update list params: %w", err)
 	}
+
+	path := fmt.Sprintf("/lists/%s", params.ID)
 
 	var list List
-	e = json.NewDecoder(r.Body).Decode(&list)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
+	err = t.doRequest("PUT", path, queryParams, &list)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update trello list: %w", err)
 	}
 
 	return &list, nil
 }
 
-func (t TrelloClient) CreateCard(cardName, listId string) (*Card, error) {
-	encodedName := url.QueryEscape(cardName)
-	url := fmt.Sprintf("%s/cards/?name=%s&idList=%s&key=%s&token=%s", t.baseUrl, encodedName, listId, t.apiKey, t.token)
-
-	r, e := t.httpClient.Post(url, "application/json", nil)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
+func (t *TrelloClient) UpdateCard(params *UpdateCardParams) (*Card, error) {
+	if params == nil || params.ID == "" {
+		return nil, errors.New("UpdateCardParams with a valid ID is required")
 	}
-	defer r.Body.Close()
 
-	if e := handleHTTPResponse(r); e != nil {
-		return nil, e
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process update card params: %w", err)
 	}
+
+	path := fmt.Sprintf("/cards/%s", params.ID)
 
 	var card Card
-	e = json.NewDecoder(r.Body).Decode(&card)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
+	err = t.doRequest("PUT", path, queryParams, &card)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update trello card: %w", err)
 	}
 
 	return &card, nil
 }
 
-// We should add it so that the input shouldn't be boardName but the actual struct, when I add the types later
-// I would then need to automatically create the apiUrl based on if a param is nil or not
-func (t TrelloClient) UpdateBoard(boardId, newBoardName string) (*Board, error) {
-	encodedName := url.QueryEscape(newBoardName)
-	url := fmt.Sprintf("%s/boards/%s?name=%s&key=%s&token=%s", t.baseUrl, boardId, encodedName, t.apiKey, t.token)
-
-	req, e := http.NewRequest("PUT", url, nil)
-	if e != nil {
-		return nil, fmt.Errorf("failed to create request: %w", e)
+func (t *TrelloClient) DeleteBoard(boardId string) error {
+	if boardId == "" {
+		return errors.New("boardId is required to delete a trello board")
 	}
-
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
-	}
-	defer response.Body.Close()
-
-	if e := handleHTTPResponse(response); e != nil {
-		return nil, e
-	}
-
-	var board Board
-	e = json.NewDecoder(response.Body).Decode(&board)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
-
-	return &board, nil
-}
-
-// should be something like what list/board/card you want to update and then the struct with all the information
-func (t TrelloClient) UpdateList(listId, newListName string) (*List, error) {
-	encodedName := url.QueryEscape(newListName)
-	url := fmt.Sprintf("%s/lists/%s?name=%s&key=%s&token=%s", t.baseUrl, listId, encodedName, t.apiKey, t.token)
-
-	req, e := http.NewRequest("PUT", url, nil)
-	if e != nil {
-		return nil, fmt.Errorf("failed to create request: %w", e)
-	}
-
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
-	}
-	defer response.Body.Close()
-
-	if e := handleHTTPResponse(response); e != nil {
-		return nil, e
-	}
-
-	var list List
-	e = json.NewDecoder(response.Body).Decode(&list)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
-
-	return &list, nil
-}
-
-func (t TrelloClient) UpdateCard(cardId, newCardName string) (*Card, error) {
-	encodedName := url.QueryEscape(newCardName)
-	url := fmt.Sprintf("%s/cards/%s?name=%s&key=%s&token=%s", t.baseUrl, cardId, encodedName, t.apiKey, t.token)
-
-	req, e := http.NewRequest("PUT", url, nil)
-	if e != nil {
-		return nil, fmt.Errorf("failed to create request: %w", e)
-	}
-
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
-	}
-	defer response.Body.Close()
-
-	if e := handleHTTPResponse(response); e != nil {
-		return nil, e
-	}
-
-	var card Card
-	e = json.NewDecoder(response.Body).Decode(&card)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
-	}
-
-	return &card, nil
-}
-
-func (t TrelloClient) DeleteBoard(boardId string) error {
-	url := fmt.Sprintf("%s/boards/%s?key=%s&token=%s", t.baseUrl, boardId, t.apiKey, t.token)
-
-	req, e := http.NewRequest("DELETE", url, nil)
-	if e != nil {
-		return fmt.Errorf("failed to create request: %w", e)
-	}
-
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return fmt.Errorf("network error: %w", e)
-	}
-	defer response.Body.Close()
-
-	if e := handleHTTPResponse(response); e != nil {
-		return e
+	path := fmt.Sprintf("/boards/%s", boardId)
+	err := t.doRequest("DELETE", path, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete trello board %s: %w", boardId, err)
 	}
 
 	return nil
 }
 
 // this has a value key for if you want to archive it or not
-func (t TrelloClient) ArchiveList(listId string, setArchive bool) (*List, error) {
-	url := fmt.Sprintf("%s/lists/%s/closed?value=%t&key=%s&token=%s", t.baseUrl, listId, setArchive, t.apiKey, t.token)
-
-	req, e := http.NewRequest("PUT", url, nil)
-	if e != nil {
-		return nil, fmt.Errorf("failed to create request: %w", e)
+func (t *TrelloClient) ArchiveList(params *ArchiveListParams) (*List, error) {
+	if params == nil || params.ID == "" || params.Value == nil {
+		return nil, errors.New("ArchiveListParams requires an ID and a Value")
 	}
 
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return nil, fmt.Errorf("network error: %w", e)
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return nil, fmt.Errorf("could not process archive list params: %w", err)
 	}
-	defer response.Body.Close()
 
-	if e := handleHTTPResponse(response); e != nil {
-		return nil, e
-	}
+	path := fmt.Sprintf("/lists/%s/closed", params.ID)
 
 	var list List
-	e = json.NewDecoder(response.Body).Decode(&list)
-	if e != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", e)
+	err = t.doRequest("PUT", path, queryParams, &list)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update archive status for list %s: %w", params.ID, err)
 	}
 
 	return &list, nil
 }
 
-func (t TrelloClient) DeleteCard(cardId string) error {
-	url := fmt.Sprintf("%s/cards/%s?key=%s&token=%s", t.baseUrl, cardId, t.apiKey, t.token)
-
-	req, e := http.NewRequest("DELETE", url, nil)
-	if e != nil {
-		return fmt.Errorf("failed to create request: %w", e)
+func (t *TrelloClient) DeleteCard(cardId string) error {
+	if cardId == "" {
+		return errors.New("cardId is required to delete a trello board")
 	}
 
-	response, e := t.httpClient.Do(req)
-	if e != nil {
-		return fmt.Errorf("network error: %w", e)
-	}
-	defer response.Body.Close()
-
-	if e := handleHTTPResponse(response); e != nil {
-		return e
+	path := fmt.Sprintf("/cards/%s", cardId)
+	err := t.doRequest("DELETE", path, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete trello card: %w", err)
 	}
 
 	return nil
