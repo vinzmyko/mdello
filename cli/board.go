@@ -50,13 +50,6 @@ var boardCmd = &cobra.Command{
 		tempFile.WriteString(originalContent)
 		tempFile.Close()
 
-		// Get file info before editing
-		beforeStat, err := os.Stat(tempFile.Name())
-		if err != nil {
-			fmt.Printf("Error getting file stats: %v\n", err)
-			return
-		}
-
 		editor, err := getEditor()
 		if err != nil {
 			fmt.Printf("Error getting editor: %v\n", err)
@@ -71,12 +64,6 @@ var boardCmd = &cobra.Command{
 		err = editorCmd.Run()
 		if err != nil {
 			fmt.Printf("Error opening editor: %v\n", err)
-			return
-		}
-
-		afterStat, err := os.Stat(tempFile.Name())
-		if err != nil {
-			fmt.Printf("Error getting file stats after edit: %v\n", err)
 			return
 		}
 
@@ -100,13 +87,7 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		if !afterStat.ModTime().After(beforeStat.ModTime()) {
-			fmt.Println("File was not saved. Aborting.")
-			return
-		}
-
 		fmt.Println("\nBoard edited successfully!")
-		fmt.Printf("Changes detected: %d bytes\n", len(editedContent))
 
 		markdown.DetectChanges(originalBoard, edittedBoard)
 	},
