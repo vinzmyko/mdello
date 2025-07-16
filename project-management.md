@@ -25,6 +25,8 @@
 - Create, Read, Update Data Models ✅
 - Error handling and robustness ✅
 - Validate the trello token if it's incorrect, in TrelloClient ✅
+- Update the operations.go to use the Params structs at input parameters ✅
+- Refactor operations.go functions to use helper functions as similar code for each: createrequest, request, response ✅
 
 ## In Progress
 - Basic CLI structure
@@ -66,9 +68,25 @@ card title:vinzmykodelrosario
 - Extend parser.go to extract the ids ✅
 - Create structure based on markdown file ✅
 - Clean up the board.go file and parser.go file and commit ✅
-- Compare the original markdown file struct vs the editted markdown file
-    - What are the changes from the original and the editted version
-- Simple name changes
+- Compare the original markdown file struct vs the editted markdown file ✅
+    - What are the changes from the original and the editted version ✅
+- Simple board name changes ✅
+
+TODO: Refactor code now that it works
+- Figure out how to deal with the card ids
+- Refactor and clean up all the trail code
+    - parser.go
+        - Which structs need to be private
+        - Correct regex based on how we solved the shortID in convert.go
+        - Should detect changes function be in here?
+        - right now the file handles markdown → intermidiate structs and comparing the original and editted
+        - origList and edList seem messy fix the variables I made here
+    - actions.go
+        - Think about the best layout to handle the structs and the interface implementation
+            - all structs together then the implementation methods?
+            - struct then related impl methods?
+                - in order of board, list, cards
+
 - Moving cards
 
 ## Queued Up
@@ -77,5 +95,3 @@ card title:vinzmykodelrosario
 
 ## Backlog
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
-- Update the operations.go to use the Params structs at input parameters
-- Refactor operations.go functions to use helper functions as similar code for each: createrequest, request, response
