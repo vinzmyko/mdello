@@ -2,6 +2,7 @@
 package markdown
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"time"
@@ -10,14 +11,52 @@ import (
 	"github.com/vinzmyko/mdello/trello"
 )
 
-func ConvertToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config, board *trello.Board) (string, error) {
+type BoardSession struct {
+	board    *trello.Board
+	idMapper *idMapper
+}
+
+type idMapper struct {
+	shortToFull map[string]string
+	fullToShort map[string]string
+}
+
+func NewBoardSession(board *trello.Board, trelloClient *trello.TrelloClient) (*BoardSession, error) {
+	session := &BoardSession{
+		board: board,
+		idMapper: &idMapper{
+			shortToFull: make(map[string]string),
+			fullToShort: make(map[string]string),
+		},
+	}
+
+	err := session.buildIDMapping(trelloClient)
+	return session, err
+}
+
+func (s *BoardSession) GetShortID(fullID string) string {
+	return s.idMapper.fullToShort[fullID]
+}
+
+func (s *BoardSession) ResolveShortID(shortID string) (string, error) {
+	if fullID, exists := s.idMapper.shortToFull[shortID]; exists {
+		return fullID, nil
+	}
+	return "", fmt.Errorf("short ID %s not found", shortID)
+}
+
+func ConvertToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config, board *trello.Board) (string, *BoardSession, error) {
+	session, err := NewBoardSession(board, trelloClient)
+	if err != nil {
+		return "", nil, err
+	}
+
 	var markdown strings.Builder
-	markdown.WriteString(fmt.Sprintf("# %s {%s}\n", board.Name, shortID(board.ID)))
+	markdown.WriteString(fmt.Sprintf("# %s {%s}\n", board.Name, session.GetShortID(board.ID)))
 
 	lists, _ := trelloClient.GetLists(board.ID)
-
 	for _, list := range lists {
-		markdown.WriteString(fmt.Sprintf("\n## %s {%s}", list.Name, shortID(list.ID)))
+		markdown.WriteString(fmt.Sprintf("\n## %s {%s}", list.Name, session.GetShortID(list.ID)))
 		cards, _ := trelloClient.GetCards(list.ID)
 
 		for _, card := range cards {
@@ -36,22 +75,20 @@ func ConvertToMarkdown(trelloClient *trello.TrelloClient, configuration *config.
 				dueDateStr = fmt.Sprintf(" due:%s", formatDate(card, configuration))
 			}
 
-			markdown.WriteString(fmt.Sprintf("\n- %s %s%s%s {%s}", checkbox, card.Name, labels.String(), (dueDateStr), shortID(card.ID)))
+			markdown.WriteString(fmt.Sprintf("\n- %s %s%s%s {%s}",
+				checkbox, card.Name, labels.String(), dueDateStr, session.GetShortID(card.ID)))
 		}
 		markdown.WriteString("\n")
 	}
 
-	return markdown.String(), nil
+	return markdown.String(), session, nil
 }
 
-const SHORT_ID_LENGTH = 4
+const SHORT_ID_LENGTH = 5
 
 func shortID(trelloID string) string {
-	if len(trelloID) < SHORT_ID_LENGTH {
-		return trelloID
-	}
-	// Using the end of the ID because same starting ID
-	return trelloID[len(trelloID)-SHORT_ID_LENGTH:]
+	hash := sha256.Sum256([]byte(trelloID))
+	return fmt.Sprintf("%x", hash)[:SHORT_ID_LENGTH]
 }
 
 func formatDate(card trello.Card, configuration *config.Config) string {
@@ -62,4 +99,34 @@ func formatDate(card trello.Card, configuration *config.Config) string {
 	}
 
 	return parsedTime.Format(configuration.DateFormat)
+}
+
+func (s *BoardSession) buildIDMapping(trelloClient *trello.TrelloClient) error {
+	s.idMapper.addMapping(s.board.ID)
+
+	lists, err := trelloClient.GetLists(s.board.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, list := range lists {
+		s.idMapper.addMapping(list.ID)
+
+		cards, err := trelloClient.GetCards(list.ID)
+		if err != nil {
+			return err
+		}
+
+		for _, card := range cards {
+			s.idMapper.addMapping(card.ID)
+		}
+	}
+
+	return nil
+}
+
+func (m *idMapper) addMapping(fullID string) {
+	shortID := shortID(fullID)
+	m.shortToFull[shortID] = fullID
+	m.fullToShort[fullID] = shortID
 }
