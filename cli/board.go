@@ -39,13 +39,13 @@ var boardCmd = &cobra.Command{
 		}
 		defer os.Remove(tempFile.Name())
 
-		originalContent, err := markdown.ConvertToMarkdown(trelloClient, cfg, currentBoard)
+		originalContent, boardSession, err := markdown.ConvertToMarkdown(trelloClient, cfg, currentBoard)
 		if err != nil {
 			fmt.Printf("Coverting to markdown failed: %v", err)
 		}
 
 		originalReader := strings.NewReader(originalContent)
-		originalBoard, err := markdown.ParseMarkdown(originalReader)
+		originalBoard, err := markdown.ParseMarkdown(originalReader, boardSession)
 		if err != nil {
 			fmt.Printf("Error parsing original markdown: %v\n", err)
 			return
@@ -85,15 +85,35 @@ var boardCmd = &cobra.Command{
 		// check edited content
 		reader := bytes.NewReader(editedContent)
 
-		edittedBoard, err := markdown.ParseMarkdown(reader)
+		editedBoard, err := markdown.ParseMarkdown(reader, boardSession)
 		if err != nil {
 			fmt.Printf("Error parsing markdown: %v\n", err)
 			return
 		}
 
-		fmt.Println("\nBoard edited successfully!")
+		actions := markdown.DetectChanges(originalBoard, editedBoard)
 
-		markdown.DetectChanges(originalBoard, edittedBoard)
+		if len(actions) == 0 {
+			fmt.Println("No logical changes detected.")
+			return
+		}
+
+		fmt.Printf("\nDetected %d change(s):\n", len(actions))
+
+		// TODO: Should I add a confirmation step to confirm the changes? Will decide later
+
+		fmt.Println("\n Applying changes...")
+		for _, act := range actions {
+			err := act.Apply(trelloClient)
+			fmt.Printf("Change: %s\n", act.Description())
+			if err != nil {
+				// TODO: Decide how to handle partial failures. Stop or continue?
+				fmt.Printf("\nError applying change '%s': %v\n", act.Description(), err)
+				return
+			}
+		}
+
+		fmt.Println("\nBoard updated successfully!")
 	},
 }
 
