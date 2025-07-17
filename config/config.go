@@ -21,9 +21,9 @@ type DateFormatOption struct {
 }
 
 type Config struct {
-	Token        string        `json:"token"`
-	CurrentBoard *trello.Board `json:"currentBoard"`
-	DateFormat   string        `json:"DateFormat"`
+	Token          string `json:"token"`
+	CurrentBoardID string `json:"currentBoardId"`
+	DateFormat string `json:"DateFormat"`
 }
 
 func SaveConfig(config Config) error {
@@ -67,12 +67,19 @@ func LoadConfig() (*Config, error) {
 	return &config, nil
 }
 
+func (cfg *Config) GetCurrentBoard(trelloClient *trello.TrelloClient) (*trello.Board, error) {
+	if cfg.CurrentBoardID == "" {
+		return nil, fmt.Errorf("no current board set")
+	}
+	return trelloClient.GetBoard(cfg.CurrentBoardID)
+}
+
 func (cfg *Config) UpdateToken(newToken string) {
 	cfg.Token = newToken
 }
 
-func (cfg *Config) UpdateCurrentBoard(newBoard *trello.Board) {
-	cfg.CurrentBoard = newBoard
+func (cfg *Config) UpdateBoardID(newBoardID string) {
+	cfg.CurrentBoardID = newBoardID
 }
 
 func (cfg *Config) UpdateDateFormat(newDateFormat string) {
