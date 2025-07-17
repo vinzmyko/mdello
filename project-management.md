@@ -43,8 +43,8 @@
             - What do I want information do I want to convey for the Card?
                 - Labels ✅, due date ✅
         - The `[x]` and `[]` implemented on the cards ✅
-    - Figure out how to parse the markdown into data that we can send to the trello api
-        - Implement the movement of lists and cards when you move them in the editor
+    - Figure out how to parse the markdown into data that we can send to the trello api ✅
+        - Implement the movement of lists and cards when you move them in the editor ✅
         - If there are not invalid commands ask the user to fix it
 
 // How cards are structured example
@@ -71,27 +71,24 @@ card title:vinzmykodelrosario
 - Compare the original markdown file struct vs the editted markdown file ✅
     - What are the changes from the original and the editted version ✅
 - Simple board name changes ✅
-
-TODO: Refactor code now that it works
-- Figure out how to deal with the card ids
-- Refactor and clean up all the trail code
+- Make it so that the currentBoard is the same ✅
+- Figure out how to deal with the card ids ✅
+- Refactor and clean up all the trial code
     - parser.go
         - Which structs need to be private
-        - Correct regex based on how we solved the shortID in convert.go
         - Should detect changes function be in here?
-        - right now the file handles markdown → intermidiate structs and comparing the original and editted
-        - origList and edList seem messy fix the variables I made here
-    - actions.go
-        - Think about the best layout to handle the structs and the interface implementation
-            - all structs together then the implementation methods?
-            - struct then related impl methods?
-                - in order of board, list, cards
+        - right now the file handles markdown → intermidiate structs and comparing the original and edited
+        - origList and edList seem messy fix the variables I made here ✅
+        - Correct regex based on how we solved the shortID in convert.go ✅
 
-- Moving cards
+- Moving cards ✅
+- Finish all the actions for actions.go
+- Apply them to DetectChanges() function
 
 ## Queued Up
 - Show all the labels the board has and when you add `- @labelName` you can then add it in the cards underneath
     - To avoid errors we need to process the label changes first and then apply them to the cards
+- in actions.go update all the `return err` into `return fmt.Errorf()`
 
 ## Backlog
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
