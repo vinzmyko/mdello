@@ -169,10 +169,98 @@ func parseWithRegex(re *regexp.Regexp, line string) (name, id string) {
 	return name, id
 }
 
-func DetectChanges(originalBoard, edittedBoard *ParsedBoard) {
-	if originalBoard == edittedBoard {
-		fmt.Println("THEY ARE THE SAME")
-	} else {
-		fmt.Println("THEY ARE DIFFERENT")
+func DetectChanges(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
+	actions := make([]TrelloAction, 0)
+
+	if originalBoard.Name != editedBoard.Name {
+		actions = append(actions, UpdateBoardNameAction{
+			BoardID: originalBoard.ID,
+			OldName: originalBoard.Name,
+			NewName: editedBoard.Name,
+		})
 	}
+
+	originalListsMap := make(map[string]*parsedList)
+	for _, list := range originalBoard.Lists {
+		originalListsMap[list.id] = list
+	}
+
+	editedListMap := make(map[string]*parsedList)
+	for _, list := range editedBoard.Lists {
+		editedListMap[list.id] = list
+	}
+
+	for listID, originalList := range originalListsMap {
+		if editedList, exists := editedListMap[listID]; exists {
+			// If lists exists for both, check for modifications (name, position)
+			if originalList.name != editedList.name {
+				actions = append(actions, UpdateListNameAction{
+					ListID:  originalList.id,
+					NewName: editedList.name,
+				})
+			}
+
+			if originalList.markdownIdx != editedList.markdownIdx {
+				// TODO: Add UpdateListPositionAction
+				actions = append(actions, UpdateListPositionAction{
+					ListID:      originalList.id,
+					Name:        originalList.name,
+					OldPosition: originalList.markdownIdx,
+					NewPosition: editedList.markdownIdx,
+				})
+			}
+
+			// --- CARD CHANGE DETECTION ---
+			originalCardsMap := make(map[string]*parsedCard)
+			for _, card := range originalList.cards {
+				originalCardsMap[card.id] = card
+			}
+
+			editedCardsMap := make(map[string]*parsedCard)
+			for _, card := range editedList.cards {
+				editedCardsMap[card.id] = card
+			}
+
+			for cardID, originalCard := range originalCardsMap {
+				if editedCard, exists := editedCardsMap[cardID]; exists {
+					// TODO Check for name changes
+
+					// TODO Check for status change
+
+					if originalCard.position != editedCard.position {
+						actions = append(actions, UpdateCardPosition{
+							CardID:      originalCard.id,
+							Name:        originalCard.name,
+							OldPosition: originalCard.position,
+							NewPosition: editedCard.position,
+						})
+					}
+
+					// TODO Check for label change
+
+					// TODO Check for due date change
+				} else {
+					// Card does not exist in the editted list thus deleted
+					// TODO Add DeleteCardAction
+				}
+			}
+
+		} else {
+			// List was deleted
+			// TODO: Add DeleteListAction
+		}
+	}
+
+	// Find new lists
+	for id, edList := range originalListsMap {
+		if _, exists := originalListsMap[id]; !exists {
+			actions = append(actions, CreateListAction{
+				BoardID:  originalBoard.ID,
+				Name:     edList.name,
+				Position: edList.markdownIdx,
+			})
+		}
+	}
+
+	return actions
 }
