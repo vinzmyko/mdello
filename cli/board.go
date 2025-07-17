@@ -16,14 +16,18 @@ var boardCmd = &cobra.Command{
 	Use:   "board",
 	Short: "Edit current board via markdown file",
 	Run: func(cmd *cobra.Command, args []string) {
-		if cfg == nil || cfg.Token == "" || cfg.CurrentBoard == nil {
+		if cfg == nil || cfg.Token == "" || cfg.CurrentBoardID == "" {
 			fmt.Println("No valid cfg found. Please run 'mdello init'.")
 			return
 		}
 
 		trelloClient, err := trello.NewTrelloClient(apiKey, cfg.Token)
 
-		currentBoard := cfg.CurrentBoard
+		currentBoard, err := cfg.GetCurrentBoard(trelloClient)
+		if err != nil {
+			fmt.Printf("Error could not access current board: %v", err)
+			return
+		}
 
 		safeName := strings.ReplaceAll(currentBoard.Name, " ", "~")
 		safeName = strings.ReplaceAll(safeName, "/", "~")

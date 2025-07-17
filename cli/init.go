@@ -113,9 +113,9 @@ var initCmd = &cobra.Command{
 		fmt.Printf("\n%s selected.", selectedDateFormatDisplay)
 
 		cfg := &config.Config{
-			Token:        token,
-			CurrentBoard: selectedBoard,
-			DateFormat:   actualDateFormat,
+			Token:          token,
+			CurrentBoardID: selectedBoard.ID,
+			DateFormat:     actualDateFormat,
 		}
 		fmt.Println("\nAll options have successfully been saved!")
 		fmt.Println()

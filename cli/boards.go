@@ -28,11 +28,17 @@ var boardsCmd = &cobra.Command{
 			return
 		}
 
-		if cfg.CurrentBoard != nil {
-			fmt.Printf("Current board: %s\n\n", cfg.CurrentBoard.Name)
+		if cfg.CurrentBoardID != "" {
+			currentBoard, err := cfg.GetCurrentBoard(trelloClient)
+			if err != nil {
+				fmt.Printf("Error could not access current board: %v", err)
+				return
+			}
+			fmt.Printf("Current board: %s\n\n", currentBoard.Name)
 		} else {
 			fmt.Println("No current board set")
 		}
+
 		var boardOptions []string
 		for _, board := range boards {
 			boardOptions = append(boardOptions, board.Name)
@@ -61,7 +67,7 @@ var boardsCmd = &cobra.Command{
 			return
 		}
 
-		cfg.UpdateCurrentBoard(selectedBoard)
+		cfg.UpdateBoardID(selectedBoard.ID)
 
 		err = cfg.Save()
 		if err != nil {
