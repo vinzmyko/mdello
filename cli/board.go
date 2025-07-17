@@ -39,13 +39,13 @@ var boardCmd = &cobra.Command{
 		}
 		defer os.Remove(tempFile.Name())
 
-		originalContent, boardSession, err := markdown.ConvertToMarkdown(trelloClient, cfg, currentBoard)
+		originalContent, boardSession, err := markdown.ToMarkdown(trelloClient, cfg, currentBoard)
 		if err != nil {
 			fmt.Printf("Coverting to markdown failed: %v", err)
 		}
 
 		originalReader := strings.NewReader(originalContent)
-		originalBoard, err := markdown.ParseMarkdown(originalReader, boardSession)
+		originalBoard, err := markdown.FromMarkdown(originalReader, boardSession)
 		if err != nil {
 			fmt.Printf("Error parsing original markdown: %v\n", err)
 			return
@@ -85,13 +85,13 @@ var boardCmd = &cobra.Command{
 		// check edited content
 		reader := bytes.NewReader(editedContent)
 
-		editedBoard, err := markdown.ParseMarkdown(reader, boardSession)
+		editedBoard, err := markdown.FromMarkdown(reader, boardSession)
 		if err != nil {
 			fmt.Printf("Error parsing markdown: %v\n", err)
 			return
 		}
 
-		actions := markdown.DetectChanges(originalBoard, editedBoard)
+		actions := markdown.Diff(originalBoard, editedBoard)
 
 		if len(actions) == 0 {
 			fmt.Println("No logical changes detected.")
