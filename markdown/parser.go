@@ -8,48 +8,46 @@ import (
 	"io"
 	"regexp"
 	"strings"
-
-	"github.com/vinzmyko/mdello/trello"
 )
 
 type ParsedBoard struct {
-	Board *trello.Board
+	ID    string
+	Name  string
 	Lists []*parsedList
 }
 
 type parsedList struct {
-	id       string
-	name     string
-	position int
-	cards    []*parsedCard
+	id          string
+	name        string
+	markdownIdx int
+	cards       []*parsedCard
 }
 
 type parsedCard struct {
-	id       string
-	name     string
-	position int
-	status   string
-	labels   []string
-	dueDate  string
-	listId   string
+	id         string
+	name       string
+	position   int
+	isComplete string
+	labels     []string
+	dueDate    string
 }
 
 var (
 	boardRegex = regexp.MustCompile(`^# (.+?)(?:\{([^}]+)\})?$`)
 	listRegex  = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?$`)
 
+	// TODO: Try and implement it for the cards
 	cardRegex      = regexp.MustCompile(`^- \[([ xX])\] (.+)$`)
 	cardLabelRegex = regexp.MustCompile(`@(\w+)`)
 	cardDueRegex   = regexp.MustCompile(`due:(\S+(?:\s+\S+)?)`)
 	cardIDRegex    = regexp.MustCompile(`\{([^}]+)\}`)
 )
 
-func ParseMarkdown(r io.Reader) (*ParsedBoard, error) {
+func ParseMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error) {
 	scanner := bufio.NewScanner(r)
 	lineNum := 0
 
 	parsedData := &ParsedBoard{
-		Board: &trello.Board{},
 		Lists: make([]*parsedList, 0),
 	}
 
@@ -64,17 +62,25 @@ func ParseMarkdown(r io.Reader) (*ParsedBoard, error) {
 		}
 
 		if name, id := parseWithRegex(boardRegex, line); name != "" {
-			parsedData.Board.Name = name
-			parsedData.Board.ID = id
+			resolvedBoardID, err := boardSession.ResolveShortID(id)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
+			}
+			parsedData.Name = name
+			parsedData.ID = resolvedBoardID
 			continue // This line is a board and has been processed go next line
 		}
 
 		if name, id := parseWithRegex(listRegex, line); name != "" {
+			resolvedListID, err := boardSession.ResolveShortID(id)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
+			}
 			newList := &parsedList{
-				id:       id,
-				name:     name,
-				position: listPosition,
-				cards:    make([]*parsedCard, 0),
+				id:          resolvedListID,
+				name:        name,
+				markdownIdx: listPosition,
+				cards:       make([]*parsedCard, 0),
 			}
 			parsedData.Lists = append(parsedData.Lists, newList)
 			currentList = newList
@@ -82,7 +88,7 @@ func ParseMarkdown(r io.Reader) (*ParsedBoard, error) {
 			continue
 		}
 
-		card, err := parseCard(line)
+		card, err := parseCard(line, boardSession)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +97,6 @@ func ParseMarkdown(r io.Reader) (*ParsedBoard, error) {
 				return nil, fmt.Errorf("line %d: found card before any list", lineNum)
 			}
 			card.position = len(currentList.cards)
-			card.listId = currentList.id
 
 			currentList.cards = append(currentList.cards, card)
 		}
@@ -104,7 +109,7 @@ func ParseMarkdown(r io.Reader) (*ParsedBoard, error) {
 	return parsedData, nil
 }
 
-func parseCard(line string) (*parsedCard, error) {
+func parseCard(line string, boardSession *BoardSession) (*parsedCard, error) {
 	matches := cardRegex.FindStringSubmatch(line)
 	if len(matches) < 3 {
 		return nil, fmt.Errorf("Missing checkbox or card text")
@@ -129,6 +134,11 @@ func parseCard(line string) (*parsedCard, error) {
 		id = idMatch[1]
 	}
 
+	resolvedCardID, err := boardSession.ResolveShortID(id)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to convert card shortID back to trelloID: %w", err)
+	}
+
 	// Removes all matches of regexp pattern
 	cleanText := cardText
 	cleanText = cardLabelRegex.ReplaceAllString(cleanText, "")
@@ -137,11 +147,11 @@ func parseCard(line string) (*parsedCard, error) {
 	cleanText = strings.TrimSpace(cleanText)
 
 	var card = &parsedCard{
-		id:      id,
-		name:    cleanText,
-		status:  cardStatus,
-		labels:  cardLabels,
-		dueDate: dueDate,
+		id:         resolvedCardID,
+		name:       cleanText,
+		isComplete: cardStatus,
+		labels:     cardLabels,
+		dueDate:    dueDate,
 	}
 
 	return card, nil
