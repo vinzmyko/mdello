@@ -106,6 +106,17 @@ func (t *TrelloClient) doRequest(method, path string, queryParams url.Values, re
 	return nil
 }
 
+func (t *TrelloClient) GetBoard(boardID string) (*Board, error) {
+	var board Board
+
+	path := fmt.Sprintf("/boards/%s", boardID)
+	err := t.doRequest("GET", path, nil, &board)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get board with id %s: %w", boardID, err)
+	}
+	return &board, nil
+}
+
 func (t *TrelloClient) GetBoards() ([]Board, error) {
 	var boards []Board
 
