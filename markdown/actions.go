@@ -58,7 +58,6 @@ func (act CreateListAction) Description() string {
 }
 
 // Need to handle due date, labels after we see it working
-// TODO create UpdateListLabels, UpdateListDueDate
 type UpdateListNameAction struct {
 	ListID  string
 	OldName string
@@ -100,9 +99,73 @@ func (act UpdateListPositionAction) Description() string {
 	return fmt.Sprintf(`List "%s" moved from position %d to %d`, act.Name, act.OldPosition, act.NewPosition)
 }
 
+type ArchiveListAction struct {
+	ListID string
+	Name   string
+	Value  bool
+}
+
+func (act ArchiveListAction) Apply(t *trello.TrelloClient) error {
+	val := false
+	params := &trello.ArchiveListParams{
+		ID:    act.ListID,
+		Value: &val,
+	}
+	_, err := t.ArchiveList(params)
+	return err
+}
+
+func (act ArchiveListAction) Description() string {
+	if act.Value {
+		return fmt.Sprintf(`List "%s" archived`, act.Name)
+	} else {
+		return fmt.Sprintf(`List "%s" unarchived`, act.Name)
+	}
+}
+
 // === CARD ACTIONS ===
 
-type UpdateCardPosition struct {
+type CreateCardAction struct {
+	ListID   string
+	Name     string
+	Position int
+}
+
+// TODO need to make it so that user can add in duedate labels, and is completed
+func (act CreateCardAction) Apply(t *trello.TrelloClient) error {
+	pos := fmt.Sprintf("%d", act.Position)
+	params := &trello.CreateCardParams{
+		IdList: act.ListID,
+		Name:   &act.Name,
+		Pos:    &pos,
+	}
+	_, err := t.CreateCard(params)
+	return err
+}
+
+func (act CreateCardAction) Description() string {
+	return fmt.Sprintf(`Create card "%s" at position %d`, act.Name, act.Position)
+}
+
+type UpdateCardNameAction struct {
+	CardID  string
+	OldName string
+	NewName string
+}
+
+func (act UpdateCardNameAction) Apply(t *trello.TrelloClient) error {
+	params := &trello.UpdateCardParams{
+		ID:   act.CardID,
+		Name: &act.NewName,
+	}
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (act UpdateCardNameAction) Description() string {
+	return fmt.Sprintf(`Card "%s" renamed to "%s"`, act.OldName, act.NewName)
+}
+
 type UpdateCardPositionAction struct {
 	CardID      string
 	Name        string
@@ -123,4 +186,18 @@ func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient) error {
 
 func (act UpdateCardPositionAction) Description() string {
 	return fmt.Sprintf(`Card "%s" moved from position %d to %d`, act.Name, act.OldPosition, act.NewPosition)
+}
+
+type DeleteCardAction struct {
+	Name   string
+	CardID string
+}
+
+func (act DeleteCardAction) Apply(t *trello.TrelloClient) error {
+	err := t.DeleteCard(act.CardID)
+	return err
+}
+
+func (act DeleteCardAction) Description() string {
+	return fmt.Sprintf(`List "%s" deleted`, act.Name)
 }
