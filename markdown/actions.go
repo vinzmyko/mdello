@@ -126,18 +126,20 @@ func (act ArchiveListAction) Description() string {
 // === CARD ACTIONS ===
 
 type CreateCardAction struct {
-	ListID   string
-	Name     string
-	Position int
+	ListID      string
+	Name        string
+	Position    int
+	IsCompleted bool
 }
 
 // TODO need to make it so that user can add in duedate labels, and is completed
 func (act CreateCardAction) Apply(t *trello.TrelloClient) error {
 	pos := fmt.Sprintf("%d", act.Position)
 	params := &trello.CreateCardParams{
-		IdList: act.ListID,
-		Name:   &act.Name,
-		Pos:    &pos,
+		IdList:      act.ListID,
+		Name:        &act.Name,
+		Pos:         &pos,
+		DueComplete: &act.IsCompleted,
 	}
 	_, err := t.CreateCard(params)
 	return err
@@ -186,6 +188,29 @@ func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient) error {
 
 func (act UpdateCardPositionAction) Description() string {
 	return fmt.Sprintf(`Card "%s" moved from position %d to %d`, act.Name, act.OldPosition, act.NewPosition)
+}
+
+type UpdateCardIsCompletedAction struct {
+	CardID     string
+	Name       string
+	IsComplete bool
+}
+
+func (act UpdateCardIsCompletedAction) Apply(t *trello.TrelloClient) error {
+	params := &trello.UpdateCardParams{
+		ID:          act.CardID,
+		DueComplete: &act.IsComplete,
+	}
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (act UpdateCardIsCompletedAction) Description() string {
+	if act.IsComplete {
+		return fmt.Sprintf(`Card "%s" status is complete`, act.Name)
+	} else {
+		return fmt.Sprintf(`Card "%s" status is not complete`, act.Name)
+	}
 }
 
 type DeleteCardAction struct {

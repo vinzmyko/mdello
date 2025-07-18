@@ -13,7 +13,7 @@ var (
 	listRegex  = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?$`)
 
 	// TODO: Still need to do the card field editting
-	cardRegex      = regexp.MustCompile(`^- \[([ xX])\] (.+)$`)
+	cardRegex      = regexp.MustCompile(`^- \[([ xX]?)\] (.+)$`)
 	cardLabelRegex = regexp.MustCompile(`@(\w+)`)
 	cardDueRegex   = regexp.MustCompile(`due:(\S+(?:\s+\S+)?)`)
 	cardIDRegex    = regexp.MustCompile(`\{([^}]+)\}`)
@@ -90,7 +90,7 @@ func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error)
 	if len(matches) < 3 {
 		return nil, fmt.Errorf("Missing checkbox or card text")
 	}
-	cardStatus := matches[1]
+	cardIsCompleted := matches[1]
 	cardText := matches[2]
 
 	var cardLabels []string
@@ -125,7 +125,7 @@ func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error)
 	var card = &parsedCard{
 		id:         resolvedCardID,
 		name:       cleanText,
-		isComplete: cardStatus,
+		isComplete: cardIsCompleted,
 		labels:     cardLabels,
 		dueDate:    dueDate,
 	}

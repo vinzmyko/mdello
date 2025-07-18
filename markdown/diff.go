@@ -1,5 +1,9 @@
 package markdown
 
+import (
+	"strings"
+)
+
 func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 	actions := make([]TrelloAction, 0)
 
@@ -52,6 +56,15 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 
 			for cardID, originalCard := range originalCardsMap {
 				if editedCard, exists := editedCardsMap[cardID]; exists {
+					if originalCard.position != editedCard.position {
+						actions = append(actions, UpdateCardPositionAction{
+							CardID:      originalCard.id,
+							Name:        originalCard.name,
+							OldPosition: originalCard.position,
+							NewPosition: editedCard.position,
+						})
+					}
+
 					if originalCard.name != editedCard.name {
 						actions = append(actions, UpdateCardNameAction{
 							CardID:  originalCard.id,
@@ -60,14 +73,13 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 						})
 					}
 
-					// TODO: Check for status change
+					if originalCard.isComplete != editedCard.isComplete {
+						isComplete := strings.ToLower(editedCard.isComplete) == "x"
 
-					if originalCard.position != editedCard.position {
-						actions = append(actions, UpdateCardPositionAction{
-							CardID:      originalCard.id,
-							Name:        originalCard.name,
-							OldPosition: originalCard.position,
-							NewPosition: editedCard.position,
+						actions = append(actions, UpdateCardIsCompletedAction{
+							CardID:     originalCard.id,
+							IsComplete: isComplete,
+							Name:       editedCard.name,
 						})
 					}
 
@@ -84,10 +96,13 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 
 			for cardID, editedCard := range editedCardsMap {
 				if _, exists := originalCardsMap[cardID]; !exists {
+					isComplete := strings.ToLower(editedCard.isComplete) == "x"
+
 					actions = append(actions, CreateCardAction{
-						ListID:   originalList.id,
-						Name:     editedCard.name,
-						Position: editedCard.position,
+						ListID:      originalList.id,
+						Name:        editedCard.name,
+						Position:    editedCard.position,
+						IsCompleted: isComplete,
 					})
 				}
 			}
