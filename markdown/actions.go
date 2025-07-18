@@ -30,7 +30,7 @@ func (act UpdateBoardNameAction) Apply(t *trello.TrelloClient) error {
 }
 
 func (act UpdateBoardNameAction) Description() string {
-	return fmt.Sprintf("Board name changed from '%s' to '%s'", act.OldName, act.NewName)
+	return fmt.Sprintf(`Board "%s" name changed from "%s" to "%s"`, act.BoardID, act.OldName, act.NewName)
 }
 
 // === LIST ACTIONS ===
@@ -54,10 +54,11 @@ func (act CreateListAction) Apply(t *trello.TrelloClient) error {
 }
 
 func (act CreateListAction) Description() string {
-	return fmt.Sprintf("Create new list: '%s'", act.Name)
+	return fmt.Sprintf(`Created list "%s" at position %d`, act.Name, act.Position)
 }
 
 // Need to handle due date, labels after we see it working
+// TODO create UpdateListLabels, UpdateListDueDate
 type UpdateListNameAction struct {
 	ListID  string
 	OldName string
@@ -74,7 +75,7 @@ func (act UpdateListNameAction) Apply(t *trello.TrelloClient) error {
 }
 
 func (act UpdateListNameAction) Description() string {
-	return fmt.Sprintf("List name changed from '%s' to '%s'", act.OldName, act.NewName)
+	return fmt.Sprintf(`List "%s" renamed to "%s"`, act.OldName, act.NewName)
 }
 
 type UpdateListPositionAction struct {
@@ -96,19 +97,20 @@ func (act UpdateListPositionAction) Apply(t *trello.TrelloClient) error {
 }
 
 func (act UpdateListPositionAction) Description() string {
-	return fmt.Sprintf("List '%s' position moved from '%d' to '%d'", act.Name, act.OldPosition, act.NewPosition)
+	return fmt.Sprintf(`List "%s" moved from position %d to %d`, act.Name, act.OldPosition, act.NewPosition)
 }
 
 // === CARD ACTIONS ===
 
 type UpdateCardPosition struct {
+type UpdateCardPositionAction struct {
 	CardID      string
 	Name        string
 	OldPosition int
 	NewPosition int
 }
 
-func (act UpdateCardPosition) Apply(t *trello.TrelloClient) error {
+func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient) error {
 	posStr := fmt.Sprintf("%d.0", act.NewPosition)
 
 	params := &trello.UpdateCardParams{
@@ -119,6 +121,6 @@ func (act UpdateCardPosition) Apply(t *trello.TrelloClient) error {
 	return err
 }
 
-func (act UpdateCardPosition) Description() string {
-	return fmt.Sprintf("Card '%s' position moved from '%d' to '%d'", act.Name, act.OldPosition, act.NewPosition)
+func (act UpdateCardPositionAction) Description() string {
+	return fmt.Sprintf(`Card "%s" moved from position %d to %d`, act.Name, act.OldPosition, act.NewPosition)
 }
