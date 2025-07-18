@@ -23,7 +23,6 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 
 	for listID, originalList := range originalListsMap {
 		if editedList, exists := editedListMap[listID]; exists {
-			// If lists exists for both, check for modifications (name, position)
 			if originalList.name != editedList.name {
 				actions = append(actions, UpdateListNameAction{
 					ListID:  originalList.id,
@@ -53,12 +52,18 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 
 			for cardID, originalCard := range originalCardsMap {
 				if editedCard, exists := editedCardsMap[cardID]; exists {
-					// TODO Check for name changes
+					if originalCard.name != editedCard.name {
+						actions = append(actions, UpdateCardNameAction{
+							CardID:  originalCard.id,
+							OldName: originalCard.name,
+							NewName: editedCard.name,
+						})
+					}
 
-					// TODO Check for status change
+					// TODO: Check for status change
 
 					if originalCard.position != editedCard.position {
-						actions = append(actions, UpdateCardPosition{
+						actions = append(actions, UpdateCardPositionAction{
 							CardID:      originalCard.id,
 							Name:        originalCard.name,
 							OldPosition: originalCard.position,
@@ -66,34 +71,36 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 						})
 					}
 
-					// TODO Check for label change
+					// TODO: Check for label change
 
-					// TODO Check for due date change
+					// TODO: Check for due date change
 				} else {
-					// Card does not exist in the editted list thus deleted
-					// TODO Add DeleteCardAction
+					actions = append(actions, DeleteCardAction{
+						CardID: originalCard.id,
+						Name:   originalCard.name,
+					})
 				}
 			}
 
-			// for cardID, editedCard := range editedCardsMap {
-			// 	if _, exists := originalCardsMap[cardID]; !exists {
-			// 		// TODO CreateCardAction
-			// 	}
-			// }
-
-			// for cardID, originalCard := range originalCardsMap {
-			// 	if _, exists := editedCardsMap[cardID]; !exists {
-			// 		// TODO DeleteCardAction
-			// 	}
-			// }
+			for cardID, editedCard := range editedCardsMap {
+				if _, exists := originalCardsMap[cardID]; !exists {
+					actions = append(actions, CreateCardAction{
+						ListID:   originalList.id,
+						Name:     editedCard.name,
+						Position: editedCard.position,
+					})
+				}
+			}
 
 		} else {
-			// List was deleted
-			// TODO: Add DeleteListAction
+			actions = append(actions, ArchiveListAction{
+				ListID: originalList.id,
+				Name:   originalList.name,
+				Value:  true,
+			})
 		}
 	}
 
-	// Find new lists
 	for listID, editedList := range editedListMap {
 		if _, exists := originalListsMap[listID]; !exists {
 			actions = append(actions, CreateListAction{
@@ -103,15 +110,6 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 			})
 		}
 	}
-
-	// Delete new lists
-	// for listID, originalList := range originalListMap {
-	// 	if _, exists := editedListMap[listID]; !exists {
-	// 		actions = append(actions, DeleteListAction{
-	//
-	// 		})
-	// 	}
-	// }
 
 	return actions
 }
