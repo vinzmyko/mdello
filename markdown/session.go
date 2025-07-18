@@ -3,6 +3,7 @@ package markdown
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/vinzmyko/mdello/trello"
 )
@@ -10,13 +11,15 @@ import (
 const SHORT_ID_LENGTH = 5
 
 type BoardSession struct {
-	board    *trello.Board
-	idMapper *idMapper
+	board          *trello.Board
+	idMapper       *idMapper
+	newItemCounter int
 }
 
 func NewBoardSession(board *trello.Board, trelloClient *trello.TrelloClient) (*BoardSession, error) {
 	session := &BoardSession{
-		board: board,
+		board:          board,
+		newItemCounter: 0,
 		idMapper: &idMapper{
 			shortToFull: make(map[string]string),
 			fullToShort: make(map[string]string),
@@ -31,7 +34,16 @@ func (s *BoardSession) GetShortID(fullID string) string {
 	return s.idMapper.fullToShort[fullID]
 }
 
+func (s *BoardSession) IsSentinelID(id string) bool {
+	return strings.HasPrefix(id, "NEW_ITEM_")
+}
+
 func (s *BoardSession) ResolveShortID(shortID string) (string, error) {
+	if shortID == "" {
+		s.newItemCounter++
+		sentialID := fmt.Sprintf("NEW_ITEM_%d", s.newItemCounter)
+		return sentialID, nil
+	}
 	if fullID, exists := s.idMapper.shortToFull[shortID]; exists {
 		return fullID, nil
 	}
