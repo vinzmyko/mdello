@@ -35,11 +35,36 @@
     - `mdello board`
         - Finish all the actions for actions.go
             - CRUD for TrelloObjects:
-                - Board
-                - List
+                - Board: Only thing you should be able to do it change the board name ✅
+                - List CreateList ✅, UpdateListName ✅, UpdateListPosition ✅, ArchiveList ✅,
+                - For list/card creation need to think of a way to deal with the shortID since when you create one you don't know the id ✅
                 - Card
-                    - TaskCompleted, Name, labels, due date
+                    - CREATE, UPDATE
+                        - TaskCompleted ✅, Name ✅, labels, due date
         - Apply them to Diff() function
+
+// How the get labels look like
+label name='cool'
+label name='label with space'
+label name=''
+label name=''
+label name=''
+label name=''
+label name=''
+label name='from main func'
+
+- Get the actions for creating/deleting a label from the board
+    FILES:
+        - from_markdown.go - parsing the labels+labelid into data we send to the diff.go to compare them and then we need to implement the functions
+    - Just use short ids for the labels so we can detect changes instead of our current approach
+        - Add shortid in to_markdown() needs to be in this format: `@feature:blue{d3e4f}`
+    - Now we don't use the bulk updates and just need the separate actions one
+    - Remember the subtle = _light, bold = _dark
+    - Might need to delete some functions when I was testing
+    - Tested all the Create, Update, Delete for the actions
+- Now get the deleting and adding labels to cards
+- Get the Duedate working in the actions
+    - think about the best way to represent the duedate
 
 // How cards are structured example
 card title:vinzmykodelrosario
@@ -61,3 +86,10 @@ card title:vinzmykodelrosario
 - Show all the labels the board has and when you add `- @labelName` you can then add it in the cards underneath
     - To avoid errors we need to process the label changes first and then apply them to the cards
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
+
+### BUG
+- [Non Fatal] Missing ID detection logic creates false positives for new items
+    - Currently, the system assumes any list or card without a {shortID} is a new item that needs to be created. 
+      However, this creates false positives when users accidentally delete IDs from existing items.
+        - The ResolveShortID("") method will generate sentinel values (NEW_ITEM_1, etc.) for any missing ID, without verifying if the item actually exists or is genuinely new.
+            - No {shortID} → Generate sentinel ID → Diff treats as new item → Create action
