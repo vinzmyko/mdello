@@ -83,7 +83,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 
 		// Parse only after we have a list
 		if currentList != nil {
-			card, err := parseCardLine(line, boardSession)
+			card, err := parseCardLine(line, currentList.id, boardSession)
 			if err != nil {
 				return nil, err
 			}
@@ -106,7 +106,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 	return parsedData, nil
 }
 
-func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error) {
+func parseCardLine(line string, listID string, boardSession *BoardSession) (*parsedCard, error) {
 	matches := cardRegex.FindStringSubmatch(line)
 	if len(matches) < 3 {
 		return nil, fmt.Errorf("%s: Missing checkbox or card text", line)
@@ -150,6 +150,7 @@ func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error)
 	var card = &parsedCard{
 		id:         resolvedCardID,
 		name:       cleanText,
+		listID:     listID,
 		isComplete: cardIsCompleted,
 		labels:     cardLabels,
 		dueDate:    dueDate,

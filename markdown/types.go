@@ -18,6 +18,7 @@ type parsedList struct {
 
 type parsedCard struct {
 	id         string
+	listID     string
 	name       string
 	position   int
 	isComplete string
