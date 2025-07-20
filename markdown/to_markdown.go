@@ -16,7 +16,14 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 	}
 
 	var markdown strings.Builder
+
 	markdown.WriteString(fmt.Sprintf("# %s {%s}\n", board.Name, session.GetShortID(board.ID)))
+	for _, label := range board.Labels {
+		if label.Name == "" {
+			continue
+		}
+		markdown.WriteString(fmt.Sprintf("@%s:%s {%s}\n", label.Name, label.Colour, session.GetShortID(label.ID)))
+	}
 
 	lists, _ := trelloClient.GetLists(board.ID)
 	for _, list := range lists {
@@ -32,7 +39,8 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 			}
 			var labels strings.Builder
 			for _, label := range card.Labels {
-				labels.WriteString(fmt.Sprintf(" @%s", label.Name))
+				markdownLabel := strings.ReplaceAll(label.Name, " ", "~")
+				labels.WriteString(fmt.Sprintf(" @%s", markdownLabel))
 			}
 			var dueDateStr string
 			if card.Due != nil && *card.Due != "" {
