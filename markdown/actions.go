@@ -224,6 +224,30 @@ func (act CreateCardAction) Description() string {
 	return fmt.Sprintf(`Create card "%s" at position %d`, act.Name, act.Position)
 }
 
+type MoveCardAction struct {
+	CardID   string
+	Name     string
+	FromList string
+	ToList   string
+	Position int
+}
+
+func (act MoveCardAction) Apply(t *trello.TrelloClient) error {
+	posStr := fmt.Sprintf("%d.0", act.Position)
+
+	params := &trello.UpdateCardParams{
+		ID:     act.CardID,
+		IdList: &act.ToList,
+		Pos:    &posStr,
+	}
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (act MoveCardAction) Description() string {
+	return fmt.Sprintf(`Card "%s" moved from list "%s" to "%s"`, act.Name, act.FromList, act.ToList)
+}
+
 type UpdateCardNameAction struct {
 	CardID  string
 	OldName string
