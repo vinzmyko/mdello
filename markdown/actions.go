@@ -312,6 +312,48 @@ func (act UpdateCardIsCompletedAction) Description() string {
 	}
 }
 
+type AddCardLabelAction struct {
+	CardID    string
+	CardName  string
+	LabelID   string
+	LabelName string
+}
+
+func (act AddCardLabelAction) Apply(t *trello.TrelloClient) error {
+	params := &trello.AddCardLabelParams{
+		ID:      act.CardID,
+		Name:    &act.CardName,
+		LabelID: act.LabelID,
+	}
+	err := t.AddCardLabel(params)
+	return err
+}
+
+func (act AddCardLabelAction) Description() string {
+	return fmt.Sprintf(`Added label "%s" to card "%s"`, act.LabelName, act.CardName)
+}
+
+type DeleteCardLabelAction struct {
+	CardID    string
+	CardName  string
+	LabelID   string
+	LabelName string
+}
+
+func (act DeleteCardLabelAction) Apply(t *trello.TrelloClient) error {
+	params := &trello.DeleteCardLabelParams{
+		ID:      act.CardID,
+		Name:    &act.CardName,
+		LabelID: act.LabelID,
+	}
+	err := t.DeleteCardLabel(params)
+	return err
+}
+
+func (act DeleteCardLabelAction) Description() string {
+	return fmt.Sprintf(`Removed label "%s" from card "%s"`, act.LabelName, act.CardName)
+}
+
 type DeleteCardAction struct {
 	Name   string
 	CardID string
