@@ -1,9 +1,12 @@
 package markdown
 
+import "github.com/vinzmyko/mdello/trello"
+
 type ParsedBoard struct {
-	ID    string
-	Name  string
-	Lists []*parsedList
+	ID     string
+	Name   string
+	Lists  []*parsedList
+	Labels []*trello.Label
 }
 
 type parsedList struct {
