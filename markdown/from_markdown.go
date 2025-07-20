@@ -6,15 +6,18 @@ import (
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/vinzmyko/mdello/trello"
 )
 
 var (
-	boardRegex = regexp.MustCompile(`^# (.+?)(?:\{([^}]+)\})?$`)
-	listRegex  = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?$`)
+	boardRegex        = regexp.MustCompile(`^# (.+?)(?:\{([^}]+)\})?$`)
+	labelPatternRegex = regexp.MustCompile(`@([^:]+):([^:\s]+)(?:\s*\{([^}]+)\})?`)
 
-	// TODO: Still need to do the card field editting
+	listRegex = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?$`)
+
 	cardRegex      = regexp.MustCompile(`^- \[([ xX]?)\] (.+)$`)
-	cardLabelRegex = regexp.MustCompile(`@(\w+)`)
+	cardLabelRegex = regexp.MustCompile(`@([^:\s{]+)`)
 	cardDueRegex   = regexp.MustCompile(`due:(\S+(?:\s+\S+)?)`)
 	cardIDRegex    = regexp.MustCompile(`\{([^}]+)\}`)
 )
@@ -24,11 +27,13 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 	lineNum := 0
 
 	parsedData := &ParsedBoard{
-		Lists: make([]*parsedList, 0),
+		Lists:  make([]*parsedList, 0),
+		Labels: make([]*trello.Label, 0),
 	}
 
 	var currentList *parsedList
 	listPosition := 0
+	inLabelSection := false
 
 	for scanner.Scan() {
 		lineNum++
@@ -44,10 +49,22 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 			}
 			parsedData.Name = name
 			parsedData.ID = resolvedBoardID
+			inLabelSection = true
 			continue // This line is a board and has been processed go next line
 		}
 
+		// Before any lists are defined
+		if inLabelSection {
+			if label, err := extractBoardLabels(line, boardSession); err != nil {
+				return nil, fmt.Errorf("error parsing board label: %w", err)
+			} else if label != nil {
+				parsedData.Labels = append(parsedData.Labels, label)
+				continue
+			}
+		}
+
 		if name, id := extractNameAndID(listRegex, line); name != "" {
+			inLabelSection = false
 			resolvedListID, err := boardSession.ResolveShortID(id)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
@@ -64,17 +81,21 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 			continue
 		}
 
-		card, err := parseCardLine(line, boardSession)
-		if err != nil {
-			return nil, err
-		}
-		if card != nil {
-			if currentList == nil {
-				return nil, fmt.Errorf("line %d: found card before any list", lineNum)
+		// Parse only after we have a list
+		if currentList != nil {
+			card, err := parseCardLine(line, boardSession)
+			if err != nil {
+				return nil, err
 			}
-			card.position = len(currentList.cards)
+			if card != nil {
+				card.position = len(currentList.cards)
+				currentList.cards = append(currentList.cards, card)
+				continue
+			}
+		}
 
-			currentList.cards = append(currentList.cards, card)
+		if inLabelSection {
+			return nil, fmt.Errorf("line %d: unexpected content in label section: %s", lineNum, line)
 		}
 	}
 
@@ -88,7 +109,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error) {
 	matches := cardRegex.FindStringSubmatch(line)
 	if len(matches) < 3 {
-		return nil, fmt.Errorf("Missing checkbox or card text")
+		return nil, fmt.Errorf("%s: Missing checkbox or card text", line)
 	}
 	cardIsCompleted := matches[1]
 	cardText := matches[2]
@@ -100,6 +121,10 @@ func parseCardLine(line string, boardSession *BoardSession) (*parsedCard, error)
 	labelMatches := cardLabelRegex.FindAllStringSubmatch(cardText, -1)
 	for _, match := range labelMatches {
 		cardLabels = append(cardLabels, match[1])
+	}
+
+	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(cardText); invalidLabelPattern != "" {
+		return nil, fmt.Errorf("invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')")
 	}
 
 	if dueMatch := cardDueRegex.FindStringSubmatch(cardText); len(dueMatch) > 1 {
@@ -143,4 +168,36 @@ func extractNameAndID(re *regexp.Regexp, line string) (name, id string) {
 		id = strings.TrimSpace(matches[2])
 	}
 	return name, id
+}
+
+func extractBoardLabels(line string, boardSession *BoardSession) (*trello.Label, error) {
+	if !strings.HasPrefix(strings.TrimSpace(line), "@") {
+		return nil, nil
+	}
+
+	labelMatch := labelPatternRegex.FindStringSubmatch(line)
+	if len(labelMatch) < 3 {
+		return nil, fmt.Errorf("invalid label format on line: %s", line)
+	}
+
+	labelName := strings.TrimSpace(labelMatch[1])
+	labelColour := strings.TrimSpace(labelMatch[2])
+
+	var labelShortID string
+	if len(labelMatch) > 3 && labelMatch[3] != "" {
+		labelShortID = strings.TrimSpace(labelMatch[3])
+	}
+
+	resolvedLabelID, err := boardSession.ResolveShortID(labelShortID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve label ID for %s: %w", labelName, err)
+	}
+
+	label := &trello.Label{
+		ID:     resolvedLabelID,
+		Name:   labelName,
+		Colour: labelColour,
+	}
+
+	return label, nil
 }
