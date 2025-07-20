@@ -33,6 +33,80 @@ func (act UpdateBoardNameAction) Description() string {
 	return fmt.Sprintf(`Board "%s" name changed from "%s" to "%s"`, act.BoardID, act.OldName, act.NewName)
 }
 
+// === LABEL ACTIONS ===
+type CreateLabelAction struct {
+	BoardID string
+	Name    string
+	Colour  string
+}
+
+func (act CreateLabelAction) Apply(t *trello.TrelloClient) error {
+	params := &trello.CreateLabelParams{
+		BoardID: act.BoardID,
+		Name:    act.Name,
+		Colour:  act.Colour,
+	}
+	_, err := t.CreateLabel(params)
+	return err
+}
+
+func (act CreateLabelAction) Description() string {
+	return fmt.Sprintf(`Created label "%s" with colour "%s"`, act.Name, act.Colour)
+}
+
+type UpdateLabelName struct {
+	ID      string
+	OldName string
+	NewName string
+}
+
+func (act UpdateLabelName) Apply(t *trello.TrelloClient) error {
+	params := &trello.UpdateLabelParams{
+		ID:   act.ID,
+		Name: &act.NewName,
+	}
+	_, err := t.UpdateLabel(params)
+	return err
+}
+
+func (act UpdateLabelName) Description() string {
+	return fmt.Sprintf(`Label "%s" renamed to "%s"`, act.OldName, act.NewName)
+}
+
+type UpdateLabelColour struct {
+	ID        string
+	Name      string
+	OldColour string
+	NewColour string
+}
+
+func (act UpdateLabelColour) Apply(t *trello.TrelloClient) error {
+	params := &trello.UpdateLabelParams{
+		ID:     act.ID,
+		Colour: &act.NewColour,
+	}
+	_, err := t.UpdateLabel(params)
+	return err
+}
+
+func (act UpdateLabelColour) Description() string {
+	return fmt.Sprintf(`Label "%s" colour changed from "%s" to "%s"`, act.Name, act.OldColour, act.NewColour)
+}
+
+type DeleteLabelAction struct {
+	ID   string
+	Name string
+}
+
+func (act DeleteLabelAction) Apply(t *trello.TrelloClient) error {
+	err := t.DeleteLabel(act.ID)
+	return err
+}
+
+func (act DeleteLabelAction) Description() string {
+	return fmt.Sprintf(`Label "%s" deleted`, act.Name)
+}
+
 // === LIST ACTIONS ===
 
 type CreateListAction struct {
@@ -130,6 +204,7 @@ type CreateCardAction struct {
 	Name        string
 	Position    int
 	IsCompleted bool
+	Labels      trello.LabelNames
 }
 
 // TODO need to make it so that user can add in duedate labels, and is completed
