@@ -14,6 +14,7 @@ type Board struct {
 	Url               string       `json:"url"`
 	ShortUrl          string       `json:"shortUrl"`
 	Prefs             BoardPrefs   `json:"prefs"`
+	Labels            []Label      `json:"labels"`
 	LabelNames        LabelNames   `json:"labelNames"`
 	Limits            BoardLimits  `json:"limits"`
 	Starred           bool         `json:"starred"`
@@ -159,6 +160,33 @@ type UpdateBoardParams struct {
 	LabelNamesRed            *string `json:"labelNames/red,omitempty"`
 	LabelNamesPurple         *string `json:"labelNames/purple,omitempty"`
 	LabelNamesBlue           *string `json:"labelNames/blue,omitempty"`
+}
+
+// ========== LABEL ==========
+
+type Label struct {
+	ID      string `json:"id"`
+	IDBoard string `json:"idBoard"`
+	Name    string `json:"name"`
+	Colour  string `json:"color"`
+	Uses    int    `json:"uses"`
+}
+
+type CreateLabelParams struct {
+	BoardID string `json:"idBoard"`
+	Name    string `json:"name"`
+	Colour  string `json:"color"`
+}
+
+type GetLabelParams struct {
+	ID     string  `json:"id"`
+	Fields *string `json:"fields,omitempty"`
+}
+
+type UpdateLabelParams struct {
+	ID     string  `json:"id"`
+	Name   *string `json:"name,omitempty"`
+	Colour *string `json:"color,omitempty"`
 }
 
 // ========== LIST ==========
