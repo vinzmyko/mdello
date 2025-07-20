@@ -1,12 +1,13 @@
 package markdown
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/vinzmyko/mdello/trello"
 )
 
-func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
+func Diff(originalBoard, editedBoard *ParsedBoard) ([]TrelloAction, error) {
 	actions := make([]TrelloAction, 0)
 
 	if originalBoard.Name != editedBoard.Name {
@@ -130,7 +131,12 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 						})
 					}
 
-					actions = append(actions, checkCardProperties(originalCard, editedCard)...)
+					cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard)
+					if err != nil {
+						return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
+					}
+					actions = append(actions, cardActions...)
+
 				} else {
 					// Checks to see if the cardID exists in another list, if it does exist it's moved to another list
 					if movedCard, movedToAnotherList := allEditedCards[cardID]; movedToAnotherList {
@@ -142,7 +148,12 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 							Position: movedCard.position,
 						})
 
-						actions = append(actions, checkCardProperties(originalCard, movedCard)...)
+						cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard)
+						if err != nil {
+							return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
+						}
+						actions = append(actions, cardActions...)
+
 					} else {
 						actions = append(actions, DeleteCardAction{
 							CardID: originalCard.id,
@@ -186,10 +197,10 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 		}
 	}
 
-	return actions
+	return actions, nil
 }
 
-func checkCardProperties(originalCard, editedCard *parsedCard) []TrelloAction {
+func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *ParsedBoard) ([]TrelloAction, error) {
 	var actions []TrelloAction
 
 	if originalCard.name != editedCard.name {
@@ -209,9 +220,54 @@ func checkCardProperties(originalCard, editedCard *parsedCard) []TrelloAction {
 		})
 	}
 
-	// TODO: Add label
+	originalCardLabelsMap := make(map[string]bool)
+	for _, label := range originalCard.labels {
+		originalCardLabelsMap[label] = true
+	}
+
+	editedCardLabelsMap := make(map[string]bool)
+	for _, label := range editedCard.labels {
+		editedCardLabelsMap[label] = true
+	}
+
+	boardLabelNameToLabelIDMap := make(map[string]string)
+	for _, label := range originalBoard.Labels {
+		boardLabelNameToLabelIDMap[strings.ReplaceAll(label.Name, " ", "~")] = label.ID
+	}
+
+	// In original but not in edited
+	for _, label := range originalCard.labels {
+		if !editedCardLabelsMap[label] {
+			labelID, exists := boardLabelNameToLabelIDMap[label]
+			if !exists {
+				return nil, fmt.Errorf("label '%s' not found on board", label)
+			}
+			actions = append(actions, DeleteCardLabelAction{
+				CardID:    originalCard.id,
+				CardName:  editedCard.name,
+				LabelID:   labelID,
+				LabelName: label,
+			})
+		}
+	}
+
+	// In edited but not in original
+	for _, label := range editedCard.labels {
+		if !originalCardLabelsMap[label] {
+			labelID, exists := boardLabelNameToLabelIDMap[label]
+			if !exists {
+				return nil, fmt.Errorf("label '%s' not found on board", label)
+			}
+			actions = append(actions, AddCardLabelAction{
+				CardID:    originalCard.id,
+				CardName:  editedCard.name,
+				LabelID:   labelID,
+				LabelName: label,
+			})
+		}
+	}
 
 	// TODO: add duedate check
 
-	return actions
+	return actions, nil
 }
