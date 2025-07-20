@@ -53,6 +53,14 @@ func (s *BoardSession) ResolveShortID(shortID string) (string, error) {
 func (s *BoardSession) buildIDMapping(trelloClient *trello.TrelloClient) error {
 	s.idMapper.addMapping(s.board.ID)
 
+	labels, err := trelloClient.GetBoardLabels(s.board.ID)
+	if err != nil {
+		return err
+	}
+	for _, label := range labels {
+		s.idMapper.addMapping(label.ID)
+	}
+
 	lists, err := trelloClient.GetLists(s.board.ID)
 	if err != nil {
 		return err
