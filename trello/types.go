@@ -385,3 +385,15 @@ type UpdateCardParams struct {
 	Coordinates       *string    `json:"coordinates,omitempty"`       // For use with/by the Map View. Should be latitude,longitude
 	Cover             *CardCover `json:"cover,omitempty"`             // Updates the card's cover
 }
+
+type AddCardLabelParams struct {
+	ID      string  `json:"id"`
+	Name    *string `json:"name,omitempty"`
+	LabelID string  `json:"value"`
+}
+
+type DeleteCardLabelParams struct {
+	ID      string  `json:"id"`
+	Name    *string `json:"name,omitempty"`
+	LabelID string  `json:"value"`
+}
