@@ -78,7 +78,7 @@ var boardCmd = &cobra.Command{
 		}
 
 		if string(editedContent) == originalContent {
-			fmt.Println("No changes made. Aborting.")
+			fmt.Println("No changes made.")
 			return
 		}
 
@@ -91,7 +91,11 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		actions := markdown.Diff(originalBoard, editedBoard)
+		actions, err := markdown.Diff(originalBoard, editedBoard)
+		if err != nil {
+			fmt.Printf("Failed to analyse differences between original and edited content: %v", err)
+			return
+		}
 
 		if len(actions) == 0 {
 			fmt.Println("No logical changes detected.")
@@ -99,8 +103,6 @@ var boardCmd = &cobra.Command{
 		}
 
 		fmt.Printf("\nDetected %d change(s):\n", len(actions))
-
-		// TODO: Should I add a confirmation step to confirm the changes? Will decide later
 
 		fmt.Println("\n Applying changes...")
 		for _, act := range actions {
