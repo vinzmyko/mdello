@@ -1,7 +1,6 @@
 package markdown
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/vinzmyko/mdello/trello"
@@ -28,6 +27,22 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 		editedLabelsMap[label.ID] = label
 	}
 
+	// Create map of all original cards
+	allOriginalCards := make(map[string]*parsedCard)
+	for _, list := range originalBoard.Lists {
+		for _, card := range list.cards {
+			allOriginalCards[card.id] = card
+		}
+	}
+
+	// Create map of all the edited cards to check for moves
+	allEditedCards := make(map[string]*parsedCard)
+	for _, list := range editedBoard.Lists {
+		for _, card := range list.cards {
+			allEditedCards[card.id] = card
+		}
+	}
+
 	for labelID, originalLabel := range originalLabelsMap {
 		if editedLabel, exists := editedLabelsMap[labelID]; exists {
 			if originalLabel.Name != editedLabel.Name {
@@ -36,8 +51,6 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 					OldName: originalLabel.Name,
 					NewName: editedLabel.Name,
 				})
-				fmt.Printf("\n OriginalLabelID: %s", originalLabel.ID)
-				fmt.Printf("\n Editted LabelID: %s", editedLabel.ID)
 			}
 
 			if originalLabel.Colour != editedLabel.Colour {
@@ -117,45 +130,40 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 						})
 					}
 
-					if originalCard.name != editedCard.name {
-						actions = append(actions, UpdateCardNameAction{
-							CardID:  originalCard.id,
-							OldName: originalCard.name,
-							NewName: editedCard.name,
-						})
-					}
-
-					if originalCard.isComplete != editedCard.isComplete {
-						isComplete := strings.ToLower(editedCard.isComplete) == ""
-
-						actions = append(actions, UpdateCardIsCompletedAction{
-							CardID:     originalCard.id,
-							IsComplete: isComplete,
-							Name:       editedCard.name,
-						})
-					}
-
-					// TODO: Check for label change
-
-					// TODO: Check for due date change
+					actions = append(actions, checkCardProperties(originalCard, editedCard)...)
 				} else {
-					actions = append(actions, DeleteCardAction{
-						CardID: originalCard.id,
-						Name:   originalCard.name,
-					})
+					// Checks to see if the cardID exists in another list, if it does exist it's moved to another list
+					if movedCard, movedToAnotherList := allEditedCards[cardID]; movedToAnotherList {
+						actions = append(actions, MoveCardAction{
+							CardID:   cardID,
+							Name:     movedCard.name,
+							FromList: originalList.id,
+							ToList:   movedCard.listID,
+							Position: movedCard.position,
+						})
+
+						actions = append(actions, checkCardProperties(originalCard, movedCard)...)
+					} else {
+						actions = append(actions, DeleteCardAction{
+							CardID: originalCard.id,
+							Name:   originalCard.name,
+						})
+					}
 				}
 			}
 
 			for cardID, editedCard := range editedCardsMap {
 				if _, exists := originalCardsMap[cardID]; !exists {
-					isComplete := strings.ToLower(editedCard.isComplete) == "x"
+					if _, existedAnywhere := allOriginalCards[cardID]; !existedAnywhere {
+						isComplete := strings.ToLower(editedCard.isComplete) == "x"
 
-					actions = append(actions, CreateCardAction{
-						ListID:      originalList.id,
-						Name:        editedCard.name,
-						Position:    editedCard.position,
-						IsCompleted: isComplete,
-					})
+						actions = append(actions, CreateCardAction{
+							ListID:      editedList.id,
+							Name:        editedCard.name,
+							Position:    editedCard.position,
+							IsCompleted: isComplete,
+						})
+					}
 				}
 			}
 
@@ -177,6 +185,33 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 			})
 		}
 	}
+
+	return actions
+}
+
+func checkCardProperties(originalCard, editedCard *parsedCard) []TrelloAction {
+	var actions []TrelloAction
+
+	if originalCard.name != editedCard.name {
+		actions = append(actions, UpdateCardNameAction{
+			CardID:  originalCard.id,
+			OldName: originalCard.name,
+			NewName: editedCard.name,
+		})
+	}
+
+	if originalCard.isComplete != editedCard.isComplete {
+		isComplete := strings.ToLower(editedCard.isComplete) == "x"
+		actions = append(actions, UpdateCardIsCompletedAction{
+			CardID:     originalCard.id,
+			IsComplete: isComplete,
+			Name:       editedCard.name,
+		})
+	}
+
+	// TODO: Add label
+
+	// TODO: add duedate check
 
 	return actions
 }
