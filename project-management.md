@@ -55,13 +55,22 @@ label name='from main func'
 
 - Get the actions for creating/deleting a label from the board
     FILES:
-        - from_markdown.go - parsing the labels+labelid into data we send to the diff.go to compare them and then we need to implement the functions
-    - Just use short ids for the labels so we can detect changes instead of our current approach
-        - Add shortid in to_markdown() needs to be in this format: `@feature:blue{d3e4f}`
-    - Now we don't use the bulk updates and just need the separate actions one
-    - Remember the subtle = _light, bold = _dark
-    - Might need to delete some functions when I was testing
-    - Tested all the Create, Update, Delete for the actions
+        - from_markdown.go - parsing the labels+labelid into data we send to the diff.go to compare them and then we need to implement the functions ✅
+    - Just use short ids for the labels so we can detect changes instead of our current approach ✅
+        - Add shortid in to_markdown() needs to be in this format: `@feature:blue {d3e4f}` and they are stacked vertically ✅
+    - Test all the Create, Update, Delete for the actions
+        - actions.go LABELS
+            - Update label name ✅
+            - Update label colour ✅
+            - Create Label ✅
+            - Delete Label ✅
+    - Remember the subtle = _light, bold = _dark ✅
+    - Might need to delete some functions when I was testing ✅
+
+    - When moving list might change the inside data ✅
+        - Right now when creating a new card we should check the shortID to see if it existed in the previous lists and if it did move that data ✅
+            - Were gonna need a way to check all the lists for this somehow meaning maybe change the structure of how we find lists/cards in the map nested loop ✅
+
 - Now get the deleting and adding labels to cards
 - Get the Duedate working in the actions
     - think about the best way to represent the duedate
@@ -86,6 +95,7 @@ card title:vinzmykodelrosario
 - Show all the labels the board has and when you add `- @labelName` you can then add it in the cards underneath
     - To avoid errors we need to process the label changes first and then apply them to the cards
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
+- Create a `board --view/web` in which it opens your prefered browser to look at your tasks
 
 ### BUG
 - [Non Fatal] Missing ID detection logic creates false positives for new items
