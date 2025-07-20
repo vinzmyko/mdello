@@ -22,7 +22,8 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 		if label.Name == "" {
 			continue
 		}
-		markdown.WriteString(fmt.Sprintf("@%s:%s {%s}\n", label.Name, label.Colour, session.GetShortID(label.ID)))
+		markdownLabelName := strings.ReplaceAll(label.Name, " ", "~")
+		markdown.WriteString(fmt.Sprintf("@%s:%s {%s}\n", markdownLabelName, label.Colour, session.GetShortID(label.ID)))
 	}
 
 	lists, _ := trelloClient.GetLists(board.ID)
