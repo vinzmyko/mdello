@@ -1,7 +1,10 @@
 package markdown
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/vinzmyko/mdello/trello"
 )
 
 func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
@@ -13,6 +16,55 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 			OldName: originalBoard.Name,
 			NewName: editedBoard.Name,
 		})
+	}
+
+	originalLabelsMap := make(map[string]*trello.Label)
+	for _, label := range originalBoard.Labels {
+		originalLabelsMap[label.ID] = label
+	}
+
+	editedLabelsMap := make(map[string]*trello.Label)
+	for _, label := range editedBoard.Labels {
+		editedLabelsMap[label.ID] = label
+	}
+
+	for labelID, originalLabel := range originalLabelsMap {
+		if editedLabel, exists := editedLabelsMap[labelID]; exists {
+			if originalLabel.Name != editedLabel.Name {
+				actions = append(actions, UpdateLabelName{
+					ID:      originalLabel.ID,
+					OldName: originalLabel.Name,
+					NewName: editedLabel.Name,
+				})
+				fmt.Printf("\n OriginalLabelID: %s", originalLabel.ID)
+				fmt.Printf("\n Editted LabelID: %s", editedLabel.ID)
+			}
+
+			if originalLabel.Colour != editedLabel.Colour {
+				actions = append(actions, UpdateLabelColour{
+					ID:        originalLabel.ID,
+					Name:      originalLabel.Name,
+					OldColour: originalLabel.Colour,
+					NewColour: editedLabel.Colour,
+				})
+			}
+
+		} else {
+			actions = append(actions, DeleteLabelAction{
+				ID:   originalLabel.ID,
+				Name: originalLabel.Name,
+			})
+		}
+	}
+
+	for labelID, editedLabel := range editedLabelsMap {
+		if _, exists := originalLabelsMap[labelID]; !exists {
+			actions = append(actions, CreateLabelAction{
+				BoardID: originalBoard.ID,
+				Name:    editedLabel.Name,
+				Colour:  editedLabel.Colour,
+			})
+		}
 	}
 
 	originalListsMap := make(map[string]*parsedList)
@@ -74,7 +126,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard) []TrelloAction {
 					}
 
 					if originalCard.isComplete != editedCard.isComplete {
-						isComplete := strings.ToLower(editedCard.isComplete) == "x"
+						isComplete := strings.ToLower(editedCard.isComplete) == ""
 
 						actions = append(actions, UpdateCardIsCompletedAction{
 							CardID:     originalCard.id,
