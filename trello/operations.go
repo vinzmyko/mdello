@@ -333,6 +333,41 @@ func (t *TrelloClient) UpdateCard(params *UpdateCardParams) (*Card, error) {
 	return &card, nil
 }
 
+func (t *TrelloClient) AddCardLabel(params *AddCardLabelParams) error {
+	if params == nil || params.ID == "" || params.LabelID == "" {
+		return errors.New("AddCardLabelParams requires valid ID and LabelID")
+	}
+
+	queryParams, err := paramsToURLValues(params)
+	if err != nil {
+		return fmt.Errorf("could not process add card label params: %w", err)
+	}
+
+	path := fmt.Sprintf("/cards/%s/idLabels", params.ID)
+
+	err = t.doRequest("POST", path, queryParams, nil)
+	if err != nil {
+		return fmt.Errorf("failed to add label to card: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TrelloClient) DeleteCardLabel(params *DeleteCardLabelParams) error {
+	if params == nil || params.ID == "" || params.LabelID == "" {
+		return errors.New("DeleteCardLabelParams requires valid ID and LabelID")
+	}
+
+	path := fmt.Sprintf("/cards/%s/idLabels/%s", params.ID, params.LabelID)
+
+	err := t.doRequest("DELETE", path, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete label from card: %w", err)
+	}
+
+	return nil
+}
+
 func (t *TrelloClient) DeleteBoard(boardId string) error {
 	if boardId == "" {
 		return errors.New("boardId is required to delete a trello board")
