@@ -328,18 +328,43 @@ func (act AddCardLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) 
 		return fmt.Errorf("failed to get board: %w", err)
 	}
 
+	var labelID string
 	for _, label := range board.Labels {
 		labelNameMarkdown := strings.ReplaceAll(label.Name, " ", "~")
 		if labelNameMarkdown == act.LabelName {
-			params := &trello.AddCardLabelParams{
-				ID:      act.CardID,
-				Name:    &act.CardName,
-				LabelID: label.ID,
-			}
-			return t.AddCardLabel(params)
+			labelID = label.ID
+			break
 		}
 	}
-	return fmt.Errorf(`Label "%s" not found on board`, err)
+	if labelID == "" {
+		return fmt.Errorf("label '%s' not found on board", act.LabelName)
+	}
+
+	// Find the card by name (since ID might be sentinel)
+	lists, err := t.GetLists(ctx.BoardID)
+	if err != nil {
+		return fmt.Errorf("failed to get lists: %w", err)
+	}
+
+	for _, list := range lists {
+		cards, err := t.GetCards(list.ID)
+		if err != nil {
+			continue // Skip this list if we can't get cards
+		}
+
+		for _, card := range cards {
+			if card.Name == act.CardName {
+				params := &trello.AddCardLabelParams{
+					ID:      card.ID,
+					Name:    &act.CardName,
+					LabelID: labelID,
+				}
+				return t.AddCardLabel(params)
+			}
+		}
+	}
+
+	return fmt.Errorf("card '%s' not found on board", act.CardName)
 }
 
 func (act AddCardLabelAction) Description() string {
@@ -354,12 +379,31 @@ type UpdateCardDueDate struct {
 }
 
 func (act UpdateCardDueDate) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
-	params := &trello.UpdateCardParams{
-		ID:  act.CardID,
-		Due: &act.Due,
+	// Find the card by name, since ID might be sentinel ID
+	lists, err := t.GetLists(ctx.BoardID)
+	if err != nil {
+		return fmt.Errorf("failed to get lists: %w", err)
 	}
-	_, err := t.UpdateCard(params)
-	return err
+
+	for _, list := range lists {
+		cards, err := t.GetCards(list.ID)
+		if err != nil {
+			continue // Skip this list if we can't get cards
+		}
+
+		for _, card := range cards {
+			if card.Name == act.Name {
+				params := &trello.UpdateCardParams{
+					ID:  card.ID,
+					Due: &act.Due,
+				}
+				_, err := t.UpdateCard(params)
+				return err
+			}
+		}
+	}
+
+	return fmt.Errorf("card '%s' not found on board", act.Name)
 }
 
 func (act UpdateCardDueDate) Description() string {
