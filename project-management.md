@@ -43,17 +43,7 @@
                         - TaskCompleted ✅, Name ✅, labels, due date
         - Apply them to Diff() function
 
-// How the get labels look like
-label name='cool'
-label name='label with space'
-label name=''
-label name=''
-label name=''
-label name=''
-label name=''
-label name='from main func'
-
-- Get the actions for creating/deleting a label from the board
+- Get the actions for creating/deleting a label from the board ✅
     FILES:
         - from_markdown.go - parsing the labels+labelid into data we send to the diff.go to compare them and then we need to implement the functions ✅
     - Just use short ids for the labels so we can detect changes instead of our current approach ✅
@@ -79,47 +69,25 @@ label name='from main func'
     - think about the best way to represent the duedate ✅
 
 - Now get the deleting and adding labels to cards ✅
-    - TODO: create label and add it to card
-    - TODO: when you create the card it should be able to accept labels and duedate as well
+    - create label and add it to card ✅
+        - Created problems since the way I created cards before. I used the state when the user started editing the markdown. However, I couldn't create something then use it
+        in the same markdown file. Therefore, I made it so the CreateLabelAction command got a fresh set of board labels each time. ✅
+    - when you create the card it should be able to accept labels and duedate as well ✅
+    - Check creating new list and new cards with card properties ✅
 
-
-git add markdown/from_markdown.go
-git commit -m "fix(markdown): remove label validation that conflicts with due dates"
-
-git add markdown/to_markdown.go
-git commit -m "feat(markdown): add parseMarkdownDate() and make formatDate() more modular"
-
-git add markdown/actions.go
-git commit -m "feat(markdown): add update and delete card duedate actions"
-
-git add markdown/diff.go
-git commit -m "feat(markdown): handle card due date creation, update, and deletion"
-
-git add cli/board.go
-git commit -m "fix(cli): inject userconfig to markdown conversion functions"
-
-git add project-management.md
-
-
-// How cards are structured example
-card title:vinzmykodelrosario
-        id:b293
-        status:[x]
-        position:0
-        listID:b281
-        due date:17-07-2025 15:47
-        labels:
-                test
-                vinz
+"As a user, I want to 'Add a `!` to the end of the markdown representation of boards, lists, and cards'. So I get more specific changes to the trello objects"
+    - Add the `!` feature at the end in which you can add more detail to your changes not just the quick ones
+    - We would need a way to put a lot of the specific edits into one markdown file and then process each section as separate api requests
+    - These api trello call changes should happen after the quick changes. We should get the new data based on the quick changes
 
 ## Queued Up
-- Add the `!` feature at the end in which you can add more detail to your changes not just the quick ones
 - in actions.go update all the `return err` into `return fmt.Errorf()`
 
 ## Backlog
 - If there are not invalid commands ask the user to fix it
 - When I didn't have net and tried to do cli command I got a weird error. Error wasn't obvious that my internet was down so fix that
 - Create a `board --view/web` in which it opens your prefered browser to look at your tasks
+- Make a new command in which you can update user preferences. The only one I can think of would be if you want the board labels to show and put the date format here as well
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
 
 ### BUG
@@ -128,3 +96,8 @@ card title:vinzmykodelrosario
       However, this creates false positives when users accidentally delete IDs from existing items.
         - The ResolveShortID("") method will generate sentinel values (NEW_ITEM_1, etc.) for any missing ID, without verifying if the item actually exists or is genuinely new.
             - No {shortID} → Generate sentinel ID → Diff treats as new item → Create action
+- [Medium] Missing the `due:20-03-2025 00:00` more specifically the `:` will result in this error 
+"Error parsing markdown: invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')"
+    - On this line `	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(tempText); invalidLabelPattern != "" {`
+        - This is because it didn't recognise that format. We need to update the error message because I did not know what the error was that I forgot the `:`
+
