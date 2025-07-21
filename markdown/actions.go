@@ -2,14 +2,19 @@ package markdown
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vinzmyko/mdello/config"
 	"github.com/vinzmyko/mdello/trello"
 )
 
 type TrelloAction interface {
-	Apply(client *trello.TrelloClient) error
+	Apply(client *trello.TrelloClient, ctx *ActionContext) error
 	Description() string
+}
+
+type ActionContext struct {
+	BoardID string
 }
 
 // === BOARD ACTIONS ===
@@ -20,7 +25,7 @@ type UpdateBoardNameAction struct {
 	NewName string
 }
 
-func (act UpdateBoardNameAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateBoardNameAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateBoardParams{
 		ID:   act.BoardID,
 		Name: &act.NewName,
@@ -41,7 +46,7 @@ type CreateLabelAction struct {
 	Colour  string
 }
 
-func (act CreateLabelAction) Apply(t *trello.TrelloClient) error {
+func (act CreateLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.CreateLabelParams{
 		BoardID: act.BoardID,
 		Name:    act.Name,
@@ -61,7 +66,7 @@ type UpdateLabelName struct {
 	NewName string
 }
 
-func (act UpdateLabelName) Apply(t *trello.TrelloClient) error {
+func (act UpdateLabelName) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateLabelParams{
 		ID:   act.ID,
 		Name: &act.NewName,
@@ -81,7 +86,7 @@ type UpdateLabelColour struct {
 	NewColour string
 }
 
-func (act UpdateLabelColour) Apply(t *trello.TrelloClient) error {
+func (act UpdateLabelColour) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateLabelParams{
 		ID:     act.ID,
 		Colour: &act.NewColour,
@@ -99,7 +104,7 @@ type DeleteLabelAction struct {
 	Name string
 }
 
-func (act DeleteLabelAction) Apply(t *trello.TrelloClient) error {
+func (act DeleteLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	err := t.DeleteLabel(act.ID)
 	return err
 }
@@ -116,7 +121,7 @@ type CreateListAction struct {
 	Position int
 }
 
-func (act CreateListAction) Apply(t *trello.TrelloClient) error {
+func (act CreateListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	posStr := fmt.Sprintf("%d", act.Position)
 
 	params := &trello.CreateListParams{
@@ -139,7 +144,7 @@ type UpdateListNameAction struct {
 	NewName string
 }
 
-func (act UpdateListNameAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateListNameAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateListParams{
 		ID:   act.ListID,
 		Name: &act.NewName,
@@ -159,7 +164,7 @@ type UpdateListPositionAction struct {
 	NewPosition int
 }
 
-func (act UpdateListPositionAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateListPositionAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	posStr := fmt.Sprintf("%d.0", act.NewPosition)
 
 	params := &trello.UpdateListParams{
@@ -180,7 +185,7 @@ type ArchiveListAction struct {
 	Value  bool
 }
 
-func (act ArchiveListAction) Apply(t *trello.TrelloClient) error {
+func (act ArchiveListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	val := false
 	params := &trello.ArchiveListParams{
 		ID:    act.ListID,
@@ -209,7 +214,7 @@ type CreateCardAction struct {
 }
 
 // TODO need to make it so that user can add in duedate labels, and is completed
-func (act CreateCardAction) Apply(t *trello.TrelloClient) error {
+func (act CreateCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	pos := fmt.Sprintf("%d", act.Position)
 	params := &trello.CreateCardParams{
 		IdList:      act.ListID,
@@ -233,7 +238,7 @@ type MoveCardAction struct {
 	Position int
 }
 
-func (act MoveCardAction) Apply(t *trello.TrelloClient) error {
+func (act MoveCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	posStr := fmt.Sprintf("%d.0", act.Position)
 
 	params := &trello.UpdateCardParams{
@@ -255,7 +260,7 @@ type UpdateCardNameAction struct {
 	NewName string
 }
 
-func (act UpdateCardNameAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateCardNameAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateCardParams{
 		ID:   act.CardID,
 		Name: &act.NewName,
@@ -275,7 +280,7 @@ type UpdateCardPositionAction struct {
 	NewPosition int
 }
 
-func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	posStr := fmt.Sprintf("%d.0", act.NewPosition)
 
 	params := &trello.UpdateCardParams{
@@ -296,7 +301,7 @@ type UpdateCardIsCompletedAction struct {
 	IsComplete bool
 }
 
-func (act UpdateCardIsCompletedAction) Apply(t *trello.TrelloClient) error {
+func (act UpdateCardIsCompletedAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateCardParams{
 		ID:          act.CardID,
 		DueComplete: &act.IsComplete,
@@ -316,18 +321,27 @@ func (act UpdateCardIsCompletedAction) Description() string {
 type AddCardLabelAction struct {
 	CardID    string
 	CardName  string
-	LabelID   string
 	LabelName string
 }
 
-func (act AddCardLabelAction) Apply(t *trello.TrelloClient) error {
-	params := &trello.AddCardLabelParams{
-		ID:      act.CardID,
-		Name:    &act.CardName,
-		LabelID: act.LabelID,
+func (act AddCardLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
+	board, err := t.GetBoard(ctx.BoardID)
+	if err != nil {
+		return fmt.Errorf("failed to get board: %w", err)
 	}
-	err := t.AddCardLabel(params)
-	return err
+
+	for _, label := range board.Labels {
+		labelNameMarkdown := strings.ReplaceAll(label.Name, " ", "~")
+		if labelNameMarkdown == act.LabelName {
+			params := &trello.AddCardLabelParams{
+				ID:      act.CardID,
+				Name:    &act.CardName,
+				LabelID: label.ID,
+			}
+			return t.AddCardLabel(params)
+		}
+	}
+	return fmt.Errorf(`Label "%s" not found on board`, err)
 }
 
 func (act AddCardLabelAction) Description() string {
@@ -341,7 +355,7 @@ type UpdateCardDueDate struct {
 	Cfg    *config.Config
 }
 
-func (act UpdateCardDueDate) Apply(t *trello.TrelloClient) error {
+func (act UpdateCardDueDate) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.UpdateCardParams{
 		ID:  act.CardID,
 		Due: &act.Due,
@@ -360,7 +374,7 @@ type DeleteCardDueDate struct {
 	Name   string
 }
 
-func (act DeleteCardDueDate) Apply(t *trello.TrelloClient) error {
+func (act DeleteCardDueDate) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	emptyString := ""
 	params := &trello.UpdateCardParams{
 		ID:  act.CardID,
@@ -381,7 +395,7 @@ type DeleteCardLabelAction struct {
 	LabelName string
 }
 
-func (act DeleteCardLabelAction) Apply(t *trello.TrelloClient) error {
+func (act DeleteCardLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	params := &trello.DeleteCardLabelParams{
 		ID:      act.CardID,
 		Name:    &act.CardName,
@@ -400,7 +414,7 @@ type DeleteCardAction struct {
 	CardID string
 }
 
-func (act DeleteCardAction) Apply(t *trello.TrelloClient) error {
+func (act DeleteCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	err := t.DeleteCard(act.CardID)
 	return err
 }

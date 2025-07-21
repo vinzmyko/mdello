@@ -132,7 +132,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 						})
 					}
 
-					cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard, cfg)
+					cardActions, err := checkCardProperties(originalCard, editedCard, cfg)
 					if err != nil {
 						return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 					}
@@ -149,7 +149,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 							Position: movedCard.position,
 						})
 
-						cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard, cfg)
+						cardActions, err := checkCardProperties(originalCard, editedCard, cfg)
 						if err != nil {
 							return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 						}
@@ -201,7 +201,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 	return actions, nil
 }
 
-func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *ParsedBoard, cfg *config.Config) ([]TrelloAction, error) {
+func checkCardProperties(originalCard, editedCard *parsedCard, cfg *config.Config) ([]TrelloAction, error) {
 	var actions []TrelloAction
 
 	if originalCard.name != editedCard.name {
@@ -231,22 +231,12 @@ func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *Pa
 		editedCardLabelsMap[label] = true
 	}
 
-	boardLabelNameToLabelIDMap := make(map[string]string)
-	for _, label := range originalBoard.Labels {
-		boardLabelNameToLabelIDMap[strings.ReplaceAll(label.Name, " ", "~")] = label.ID
-	}
-
 	// In original but not in edited
 	for _, label := range originalCard.labels {
 		if !editedCardLabelsMap[label] {
-			labelID, exists := boardLabelNameToLabelIDMap[label]
-			if !exists {
-				return nil, fmt.Errorf("label '%s' not found on board", label)
-			}
 			actions = append(actions, DeleteCardLabelAction{
 				CardID:    originalCard.id,
 				CardName:  editedCard.name,
-				LabelID:   labelID,
 				LabelName: label,
 			})
 		}
@@ -255,14 +245,9 @@ func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *Pa
 	// In edited but not in original
 	for _, label := range editedCard.labels {
 		if !originalCardLabelsMap[label] {
-			labelID, exists := boardLabelNameToLabelIDMap[label]
-			if !exists {
-				return nil, fmt.Errorf("label '%s' not found on board", label)
-			}
 			actions = append(actions, AddCardLabelAction{
 				CardID:    originalCard.id,
 				CardName:  editedCard.name,
-				LabelID:   labelID,
 				LabelName: label,
 			})
 		}

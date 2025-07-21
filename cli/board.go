@@ -106,7 +106,7 @@ var boardCmd = &cobra.Command{
 
 		fmt.Println("\n Applying changes...")
 		for _, act := range actions {
-			err := act.Apply(trelloClient)
+			err := act.Apply(trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
 			fmt.Printf("Change: %s\n", act.Description())
 			if err != nil {
 				// TODO: Decide how to handle partial failures. Stop or continue?
