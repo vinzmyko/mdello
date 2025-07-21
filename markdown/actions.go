@@ -3,6 +3,7 @@ package markdown
 import (
 	"fmt"
 
+	"github.com/vinzmyko/mdello/config"
 	"github.com/vinzmyko/mdello/trello"
 )
 
@@ -331,6 +332,46 @@ func (act AddCardLabelAction) Apply(t *trello.TrelloClient) error {
 
 func (act AddCardLabelAction) Description() string {
 	return fmt.Sprintf(`Added label "%s" to card "%s"`, act.LabelName, act.CardName)
+}
+
+type UpdateCardDueDate struct {
+	CardID string
+	Name   string
+	Due    string
+	Cfg    *config.Config
+}
+
+func (act UpdateCardDueDate) Apply(t *trello.TrelloClient) error {
+	params := &trello.UpdateCardParams{
+		ID:  act.CardID,
+		Due: &act.Due,
+	}
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (act UpdateCardDueDate) Description() string {
+	formatDate := formatDate(act.Due, act.Cfg)
+	return fmt.Sprintf(`Card "%s" due date updated to "%s"`, act.Name, formatDate)
+}
+
+type DeleteCardDueDate struct {
+	CardID string
+	Name   string
+}
+
+func (act DeleteCardDueDate) Apply(t *trello.TrelloClient) error {
+	emptyString := ""
+	params := &trello.UpdateCardParams{
+		ID:  act.CardID,
+		Due: &emptyString,
+	}
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (act DeleteCardDueDate) Description() string {
+	return fmt.Sprintf(`Card "%s" due date removed`, act.Name)
 }
 
 type DeleteCardLabelAction struct {
