@@ -71,9 +71,35 @@ label name='from main func'
         - Right now when creating a new card we should check the shortID to see if it existed in the previous lists and if it did move that data ✅
             - Were gonna need a way to check all the lists for this somehow meaning maybe change the structure of how we find lists/cards in the map nested loop ✅
 
-- Now get the deleting and adding labels to cards
-- Get the Duedate working in the actions
-    - think about the best way to represent the duedate
+- get labels to be updated for card actions ✅
+    - Implement add label to cards via markdown ✅
+    - Implement delete label to cards via markdown ✅
+    - Need to add the `~` to the boardID and get it working with the cards as well ✅
+- Get the Duedate working in the actions ✅
+    - think about the best way to represent the duedate ✅
+
+- Now get the deleting and adding labels to cards ✅
+    - TODO: create label and add it to card
+    - TODO: when you create the card it should be able to accept labels and duedate as well
+
+
+git add markdown/from_markdown.go
+git commit -m "fix(markdown): remove label validation that conflicts with due dates"
+
+git add markdown/to_markdown.go
+git commit -m "feat(markdown): add parseMarkdownDate() and make formatDate() more modular"
+
+git add markdown/actions.go
+git commit -m "feat(markdown): add update and delete card duedate actions"
+
+git add markdown/diff.go
+git commit -m "feat(markdown): handle card due date creation, update, and deletion"
+
+git add cli/board.go
+git commit -m "fix(cli): inject userconfig to markdown conversion functions"
+
+git add project-management.md
+
 
 // How cards are structured example
 card title:vinzmykodelrosario
@@ -92,10 +118,9 @@ card title:vinzmykodelrosario
 
 ## Backlog
 - If there are not invalid commands ask the user to fix it
-- Show all the labels the board has and when you add `- @labelName` you can then add it in the cards underneath
-    - To avoid errors we need to process the label changes first and then apply them to the cards
-- When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
+- When I didn't have net and tried to do cli command I got a weird error. Error wasn't obvious that my internet was down so fix that
 - Create a `board --view/web` in which it opens your prefered browser to look at your tasks
+- When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
 
 ### BUG
 - [Non Fatal] Missing ID detection logic creates false positives for new items
