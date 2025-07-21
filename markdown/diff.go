@@ -149,7 +149,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 							Position: movedCard.position,
 						})
 
-						cardActions, err := checkCardProperties(originalCard, editedCard, cfg)
+						cardActions, err := checkCardProperties(originalCard, movedCard, cfg)
 						if err != nil {
 							return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 						}
@@ -169,12 +169,34 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 					if _, existedAnywhere := allOriginalCards[cardID]; !existedAnywhere {
 						isComplete := strings.ToLower(editedCard.isComplete) == "x"
 
+						// Composition when creating a new card
 						actions = append(actions, CreateCardAction{
 							ListID:      editedList.id,
 							Name:        editedCard.name,
 							Position:    editedCard.position,
 							IsCompleted: isComplete,
 						})
+
+						for _, labelName := range editedCard.labels {
+							actions = append(actions, AddCardLabelAction{
+								CardID:    cardID,
+								CardName:  editedCard.name,
+								LabelName: labelName,
+							})
+						}
+
+						if editedCard.dueDate != "" {
+							rfcDateFormat, err := parseMarkdownDate(editedCard.dueDate, cfg)
+							if err != nil {
+								return nil, fmt.Errorf("invalid due date format: %w", err)
+							}
+							actions = append(actions, UpdateCardDueDate{
+								CardID: cardID,
+								Name:   editedCard.name,
+								Due:    rfcDateFormat,
+								Cfg:    cfg,
+							})
+						}
 					}
 				}
 			}

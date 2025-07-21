@@ -210,10 +210,8 @@ type CreateCardAction struct {
 	Name        string
 	Position    int
 	IsCompleted bool
-	Labels      trello.LabelNames
 }
 
-// TODO need to make it so that user can add in duedate labels, and is completed
 func (act CreateCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	pos := fmt.Sprintf("%d", act.Position)
 	params := &trello.CreateCardParams{
