@@ -45,7 +45,7 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 			}
 			var dueDateStr string
 			if card.Due != nil && *card.Due != "" {
-				dueDateStr = fmt.Sprintf(" due:%s", formatDate(card, configuration))
+				dueDateStr = fmt.Sprintf(" due:%s", formatDate(*card.Due, configuration))
 			}
 
 			markdown.WriteString(fmt.Sprintf("\n- %s %s%s%s {%s}",
@@ -57,12 +57,22 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 	return markdown.String(), session, nil
 }
 
-func formatDate(card trello.Card, configuration *config.Config) string {
-	parsedTime, err := time.Parse(time.RFC3339, *card.Due)
+func formatDate(due string, configuration *config.Config) string {
+	parsedTime, err := time.Parse(time.RFC3339, due)
 	if err != nil {
-		fmt.Printf("\nError parsing %s's due date: skipping", card.Name)
+		fmt.Println("\nError parsing due date: skipping")
 		return ""
 	}
 
-	return parsedTime.Format(configuration.DateFormat)
+	return parsedTime.Local().Format(configuration.DateFormat)
+}
+
+func parseMarkdownDate(dateStr string, configuration *config.Config) (string, error) {
+	parsedTime, err := time.ParseInLocation(configuration.DateFormat, dateStr, time.Local)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse date %s with format %s: %w",
+			dateStr, configuration.DateFormat, err)
+	}
+
+	return parsedTime.UTC().Format(time.RFC3339), nil
 }
