@@ -91,7 +91,7 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		actions, err := markdown.Diff(originalBoard, editedBoard)
+		actions, err := markdown.Diff(originalBoard, editedBoard, cfg)
 		if err != nil {
 			fmt.Printf("Failed to analyse differences between original and edited content: %v", err)
 			return
