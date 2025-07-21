@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/vinzmyko/mdello/config"
 	"github.com/vinzmyko/mdello/trello"
 )
 
-func Diff(originalBoard, editedBoard *ParsedBoard) ([]TrelloAction, error) {
+func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]TrelloAction, error) {
 	actions := make([]TrelloAction, 0)
 
 	if originalBoard.Name != editedBoard.Name {
@@ -131,7 +132,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard) ([]TrelloAction, error) {
 						})
 					}
 
-					cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard)
+					cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard, cfg)
 					if err != nil {
 						return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 					}
@@ -148,7 +149,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard) ([]TrelloAction, error) {
 							Position: movedCard.position,
 						})
 
-						cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard)
+						cardActions, err := checkCardProperties(originalCard, editedCard, originalBoard, cfg)
 						if err != nil {
 							return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 						}
@@ -200,7 +201,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard) ([]TrelloAction, error) {
 	return actions, nil
 }
 
-func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *ParsedBoard) ([]TrelloAction, error) {
+func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *ParsedBoard, cfg *config.Config) ([]TrelloAction, error) {
 	var actions []TrelloAction
 
 	if originalCard.name != editedCard.name {
@@ -267,7 +268,25 @@ func checkCardProperties(originalCard, editedCard *parsedCard, originalBoard *Pa
 		}
 	}
 
-	// TODO: add duedate check
+	if originalCard.dueDate != editedCard.dueDate {
+		if editedCard.dueDate == "" {
+			actions = append(actions, DeleteCardDueDate{
+				CardID: originalCard.id,
+				Name:   editedCard.name,
+			})
+		} else {
+			rfcDateFormat, err := parseMarkdownDate(editedCard.dueDate, cfg)
+			if err != nil {
+				return nil, fmt.Errorf("invalid due date format: %w", err)
+			}
+			actions = append(actions, UpdateCardDueDate{
+				CardID: originalCard.id,
+				Cfg:    cfg,
+				Name:   editedCard.name,
+				Due:    rfcDateFormat,
+			})
+		}
+	}
 
 	return actions, nil
 }
