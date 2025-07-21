@@ -217,6 +217,38 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 				Name:     editedList.name,
 				Position: editedList.markdownIdx,
 			})
+
+			for _, editedCard := range editedList.cards {
+				isComplete := strings.ToLower(editedCard.isComplete) == "x"
+
+				actions = append(actions, CreateCardAction{
+					ListName:    editedList.name,
+					Name:        editedCard.name,
+					Position:    editedCard.position,
+					IsCompleted: isComplete,
+				})
+
+				for _, labelName := range editedCard.labels {
+					actions = append(actions, AddCardLabelAction{
+						CardID:    editedCard.id,
+						CardName:  editedCard.name,
+						LabelName: labelName,
+					})
+				}
+
+				if editedCard.dueDate != "" {
+					rfcDateFormat, err := parseMarkdownDate(editedCard.dueDate, cfg)
+					if err != nil {
+						return nil, fmt.Errorf("invalid due date format: %w", err)
+					}
+					actions = append(actions, UpdateCardDueDate{
+						CardID: editedCard.id,
+						Name:   editedCard.name,
+						Due:    rfcDateFormat,
+						Cfg:    cfg,
+					})
+				}
+			}
 		}
 	}
 

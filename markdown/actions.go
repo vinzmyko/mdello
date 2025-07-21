@@ -122,7 +122,7 @@ type CreateListAction struct {
 }
 
 func (act CreateListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
-	posStr := fmt.Sprintf("%d", act.Position)
+	posStr := fmt.Sprintf("%d.0", act.Position)
 
 	params := &trello.CreateListParams{
 		IdBoard: act.BoardID,

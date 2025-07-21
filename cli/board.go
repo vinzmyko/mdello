@@ -104,19 +104,64 @@ var boardCmd = &cobra.Command{
 
 		fmt.Printf("\nDetected %d change(s):\n", len(actions))
 
-		fmt.Println("\n Applying changes...")
-		for _, act := range actions {
-			err := act.Apply(trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
-			fmt.Printf("Change: %s\n", act.Description())
-			if err != nil {
-				// TODO: Decide how to handle partial failures. Stop or continue?
-				fmt.Printf("\nError applying change '%s': %v\n", act.Description(), err)
-				return
-			}
-		}
-
+		fmt.Println("\nApplying changes...")
+		applyActionsInOrder(actions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
 		fmt.Println("\nBoard updated successfully!")
 	},
+}
+
+func applyActionsInOrder(actions []markdown.TrelloAction, client *trello.TrelloClient, ctx *markdown.ActionContext) error {
+	// ===== BOARD AND LABEL CHANGES =====
+	var remainingActions []markdown.TrelloAction
+
+	for _, action := range actions {
+		switch action.(type) {
+		case markdown.CreateLabelAction, markdown.UpdateBoardNameAction, markdown.UpdateLabelName, markdown.UpdateLabelColour, markdown.DeleteLabelAction:
+			fmt.Printf("Change: %s\n", action.Description())
+			if err := action.Apply(client, ctx); err != nil {
+				return err
+			}
+		default:
+			remainingActions = append(remainingActions, action)
+		}
+	}
+
+	// ===== LIST CHANGES - CREATE FIRST, THEN MOVE =====
+	var listMoveActions []markdown.TrelloAction
+	var cardActions []markdown.TrelloAction
+
+	for _, action := range remainingActions {
+		switch action.(type) {
+		case markdown.CreateListAction, markdown.UpdateListNameAction, markdown.ArchiveListAction:
+			// Create and modify lists first
+			fmt.Printf("Change: %s\n", action.Description())
+			if err := action.Apply(client, ctx); err != nil {
+				return err
+			}
+		case markdown.UpdateListPositionAction:
+			// Save position updates for later
+			listMoveActions = append(listMoveActions, action)
+		default:
+			cardActions = append(cardActions, action)
+		}
+	}
+
+	for _, action := range listMoveActions {
+		fmt.Printf("Change: %s\n", action.Description())
+		if err := action.Apply(client, ctx); err != nil {
+			return err
+		}
+	}
+
+	// ===== CARD CHANGES =====
+	for _, action := range cardActions {
+		fmt.Printf("Change: %s\n", action.Description())
+		if err := action.Apply(client, ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getEditor() (string, error) {
