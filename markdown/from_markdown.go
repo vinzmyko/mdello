@@ -18,7 +18,7 @@ var (
 
 	cardRegex      = regexp.MustCompile(`^- \[([ xX]?)\] (.+)$`)
 	cardLabelRegex = regexp.MustCompile(`@([^:\s{]+)`)
-	cardDueRegex   = regexp.MustCompile(`due:(\S+(?:\s+\S+)?)`)
+	cardDueRegex   = regexp.MustCompile(`due:([\d-]+(?:\s+[\d:]+)?)`)
 	cardIDRegex    = regexp.MustCompile(`\{([^}]+)\}`)
 )
 
@@ -118,21 +118,25 @@ func parseCardLine(line string, listID string, boardSession *BoardSession) (*par
 	var dueDate string
 	var id string
 
-	labelMatches := cardLabelRegex.FindAllStringSubmatch(cardText, -1)
-	for _, match := range labelMatches {
-		cardLabels = append(cardLabels, match[1])
-	}
-
-	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(cardText); invalidLabelPattern != "" {
-		return nil, fmt.Errorf("invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')")
-	}
-
 	if dueMatch := cardDueRegex.FindStringSubmatch(cardText); len(dueMatch) > 1 {
 		dueDate = dueMatch[1]
 	}
 
 	if idMatch := cardIDRegex.FindStringSubmatch(cardText); len(idMatch) > 1 {
 		id = idMatch[1]
+	}
+
+	tempText := cardText
+	tempText = cardDueRegex.ReplaceAllString(tempText, "")
+	tempText = cardIDRegex.ReplaceAllString(tempText, "")
+
+	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(tempText); invalidLabelPattern != "" {
+		return nil, fmt.Errorf("invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')")
+	}
+
+	labelMatches := cardLabelRegex.FindAllStringSubmatch(cardText, -1)
+	for _, match := range labelMatches {
+		cardLabels = append(cardLabels, match[1])
 	}
 
 	resolvedCardID, err := boardSession.ResolveShortID(id)
