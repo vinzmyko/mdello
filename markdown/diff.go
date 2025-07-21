@@ -171,7 +171,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 
 						// Composition when creating a new card
 						actions = append(actions, CreateCardAction{
-							ListID:      editedList.id,
+							ListName:    editedList.name,
 							Name:        editedCard.name,
 							Position:    editedCard.position,
 							IsCompleted: isComplete,

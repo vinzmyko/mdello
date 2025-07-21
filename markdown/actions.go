@@ -1,6 +1,7 @@
 package markdown
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -206,21 +207,37 @@ func (act ArchiveListAction) Description() string {
 // === CARD ACTIONS ===
 
 type CreateCardAction struct {
-	ListID      string
+	ListName    string
 	Name        string
 	Position    int
 	IsCompleted bool
 }
 
 func (act CreateCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
+	lists, err := t.GetLists(ctx.BoardID)
+	if err != nil {
+		return errors.New("Failed to get board lists")
+	}
 	pos := fmt.Sprintf("%d", act.Position)
+
+	var targetedListID string
+	for _, list := range lists {
+		if list.Name == act.ListName {
+			targetedListID = list.ID
+			break
+		}
+	}
+	if targetedListID == "" {
+		return fmt.Errorf(`List "%s" not found on board`, act.ListName)
+	}
+
 	params := &trello.CreateCardParams{
-		IdList:      act.ListID,
+		IdList:      targetedListID,
 		Name:        &act.Name,
 		Pos:         &pos,
 		DueComplete: &act.IsCompleted,
 	}
-	_, err := t.CreateCard(params)
+	_, err = t.CreateCard(params)
 	return err
 }
 
