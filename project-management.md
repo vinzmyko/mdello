@@ -1,20 +1,3 @@
-# Initial Starting Plan
-
-1. Separation of Concerns
-    - TrelloAPI - "Talks to Trello's servers" (Create a interface for this for testing later)
-    - MarkdownParser - "Converts between markdown and board objects"  
-    - FileHandler - "Reads and writes markdown files"
-    - SyncCoordinator - "Orchestrates the sync process"
-2. Error Handling Strategy
-    Main things that can go wrong:
-        - Network errors (API down) → retry 'x' amount of times and inform user
-        - File errors → show clear message and exit
-        - Parse error → Show which line is broken
-        - Sync conflicts → For MVP just overwrite
-3. Testing Strategy
-    - MarkdownParser: has lots of edge cases 
-    - SyncCoordinator: core logic
-
 # MVP Task list
 
 ## Done
@@ -77,16 +60,27 @@
 
 "As a user, I want to 'Add a `!` to the end of the markdown representation of boards, lists, and cards'. So I get more specific changes to the trello objects"
     - Add the `!` feature at the end in which you can add more detail to your changes not just the quick ones
-    - We would need a way to put a lot of the specific edits into one markdown file and then process each section as separate api requests
-    - These api trello call changes should happen after the quick changes. We should get the new data based on the quick changes
+        - Make all the board, list, card lines take `!$` or something at the end of the string find the `!` and put it in a group `()`
+            - Check to see if they appear with something that notices it and does a print line
+                - Board ✅, list ✅, card ✅
+        - We then need to figure out how to put then in a list and apply the to markdown at the end of the first markdown file edit ✅
+            - Do I want it to show the fmt.Printf("\n Change:...") lines between new markdown file and previous markdown file? I guess not in the new updates we should user
+              the new API calls that get fresh data maybe. Or we can change the return type of Diff() to return like a struct to contain simpleActions []TrelloAction and
+              detailedActions []TrelloAction. I am just giving ideas ✅
+    - We would need a way to put a lot of the specific edits into one markdown file and then process each section as separate api requests after the first markdown file ✅
+    - These api trello call changes should happen after the quick changes. We should get the new data based on the quick changes ✅
+    - Fill in the GenerateDetailedXContent with things that the user can change for detailed information.
+        - Might need to pass in the *trello.TrelloClient to get the data about it.
+        - Decide which params the user can edit and display then in the Generate function
+    - Create another function in from_markdown.go that analyses the string content with readers and such
 
 ## Queued Up
-- in actions.go update all the `return err` into `return fmt.Errorf()`
+- Create a `board --view/web` in which it opens your prefered browser to look at your tasks
 
 ## Backlog
+- in actions.go update all the `return err` into `return fmt.Errorf()`
 - If there are not invalid commands ask the user to fix it
 - When I didn't have net and tried to do cli command I got a weird error. Error wasn't obvious that my internet was down so fix that
-- Create a `board --view/web` in which it opens your prefered browser to look at your tasks
 - Make a new command in which you can update user preferences. The only one I can think of would be if you want the board labels to show and put the date format here as well
 - When trello/operations.go gets too big separate into new dir/ with lists.go, cards.go
 
@@ -100,4 +94,3 @@
 "Error parsing markdown: invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')"
     - On this line `	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(tempText); invalidLabelPattern != "" {`
         - This is because it didn't recognise that format. We need to update the error message because I did not know what the error was that I forgot the `:`
-
