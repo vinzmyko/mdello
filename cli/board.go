@@ -22,6 +22,10 @@ var boardCmd = &cobra.Command{
 		}
 
 		trelloClient, err := trello.NewTrelloClient(apiKey, cfg.Token)
+		if err != nil {
+			fmt.Printf("Error creating trello client: %v\n", err)
+			return
+		}
 
 		currentBoard, err := cfg.GetCurrentBoard(trelloClient)
 		if err != nil {
@@ -31,19 +35,14 @@ var boardCmd = &cobra.Command{
 
 		safeName := strings.ReplaceAll(currentBoard.Name, " ", "~")
 		safeName = strings.ReplaceAll(safeName, "/", "~")
-		tempFileName := fmt.Sprintf("mdello-%s-*.md", safeName)
-		tempFile, err := os.CreateTemp("", tempFileName)
-		if err != nil {
-			fmt.Printf("Error creating temp file: %v\n", err)
-			return
-		}
-		defer os.Remove(tempFile.Name())
 
 		originalContent, boardSession, err := markdown.ToMarkdown(trelloClient, cfg, currentBoard)
 		if err != nil {
-			fmt.Printf("Coverting to markdown failed: %v", err)
+			fmt.Printf("Converting to markdown failed: %v", err)
+			return
 		}
 
+		// Parse original content for comparison
 		originalReader := strings.NewReader(originalContent)
 		originalBoard, err := markdown.FromMarkdown(originalReader, boardSession)
 		if err != nil {
@@ -51,43 +50,23 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		tempFile.WriteString(originalContent)
-		tempFile.Close()
-
-		editor, err := getEditor()
+		// First editor session
+		editedContent, err := openEditorForContent(originalContent, fmt.Sprintf("mdello-%s", safeName))
 		if err != nil {
-			fmt.Printf("Error getting editor: %v\n", err)
+			fmt.Printf("Error with editor: %v\n", err)
 			return
 		}
 
-		editorCmd := exec.Command(editor, tempFile.Name())
-		editorCmd.Stdin = os.Stdin
-		editorCmd.Stdout = os.Stdout
-		editorCmd.Stderr = os.Stderr
-
-		err = editorCmd.Run()
-		if err != nil {
-			fmt.Printf("Error opening editor: %v\n", err)
-			return
-		}
-
-		editedContent, err := os.ReadFile(tempFile.Name())
-		if err != nil {
-			fmt.Printf("Error reading edited file: %v\n", err)
-			return
-		}
-
-		if string(editedContent) == originalContent {
+		if editedContent == originalContent {
 			fmt.Println("No changes made.")
 			return
 		}
 
-		// check edited content
-		reader := bytes.NewReader(editedContent)
-
+		// Parse edited content
+		reader := bytes.NewReader([]byte(editedContent))
 		editedBoard, err := markdown.FromMarkdown(reader, boardSession)
 		if err != nil {
-			fmt.Printf("Error parsing markdown: %v\n", err)
+			fmt.Printf("Error parsing edited markdown: %v\n", err)
 			return
 		}
 
@@ -97,15 +76,27 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		if len(diffResult.QuickActions) == 0 {
+		if len(diffResult.QuickActions) == 0 && len(diffResult.DetailedActions) == 0 {
 			fmt.Println("No logical changes detected.")
 			return
 		}
 
-		fmt.Printf("\nDetected %d change(s):\n", len(diffResult.QuickActions))
+		if len(diffResult.QuickActions) > 0 {
+			fmt.Printf("Applying %d quick change(s)...\n", len(diffResult.QuickActions))
+			applyActionsInOrder(diffResult.QuickActions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
+			fmt.Println("Quick changes applied!")
+		}
 
-		fmt.Println("\nApplying changes...")
-		applyActionsInOrder(diffResult.QuickActions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
+		if len(diffResult.DetailedActions) > 0 {
+			fmt.Printf("\nFound %d item(s) marked for detailed editing.\n", len(diffResult.DetailedActions))
+			fmt.Println("Generating detailed editor...")
+
+			// TODO: create new markdown
+			// detailedContent := markdown.GenerateDetailedMarkdown(diffResult.DetailedActions, trelloClient)
+			// detailedEditedContent, err := openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
+
+			fmt.Println("Detailed changes applied!")
+		}
 		fmt.Println("\nBoard updated successfully!")
 	},
 }
@@ -162,6 +153,41 @@ func applyActionsInOrder(actions []markdown.TrelloAction, client *trello.TrelloC
 	}
 
 	return nil
+}
+
+func openEditorForContent(content string, filePrefix string) (string, error) {
+	tempFile, err := os.CreateTemp("", fmt.Sprintf("%s-*.md", filePrefix))
+	if err != nil {
+		return "", fmt.Errorf("error creating temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, err := tempFile.WriteString(content); err != nil {
+		return "", fmt.Errorf("error writing to temp file: %w", err)
+	}
+	tempFile.Close()
+
+	editor, err := getEditor()
+	if err != nil {
+		return "", fmt.Errorf("error getting editor: %w", err)
+	}
+
+	// Open editor
+	editorCmd := exec.Command(editor, tempFile.Name())
+	editorCmd.Stdin = os.Stdin
+	editorCmd.Stdout = os.Stdout
+	editorCmd.Stderr = os.Stderr
+
+	if err := editorCmd.Run(); err != nil {
+		return "", fmt.Errorf("error opening editor: %w", err)
+	}
+
+	editedContent, err := os.ReadFile(tempFile.Name())
+	if err != nil {
+		return "", fmt.Errorf("error reading edited file: %w", err)
+	}
+
+	return string(editedContent), nil
 }
 
 func getEditor() (string, error) {
