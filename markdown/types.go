@@ -28,3 +28,21 @@ type parsedCard struct {
 	dueDate      string
 	detailedEdit bool
 }
+
+type DiffResult struct {
+	QuickActions    []TrelloAction
+	DetailedActions []detailedTrelloAction
+}
+
+type detailedTrelloAction struct {
+	ObjectType ObjectType
+	ObjectID   string
+}
+
+type ObjectType string
+
+const (
+	OTBoard ObjectType = "board"
+	OTList  ObjectType = "list"
+	OTCard  ObjectType = "card"
+)

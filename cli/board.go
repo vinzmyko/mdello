@@ -91,21 +91,21 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		actions, err := markdown.Diff(originalBoard, editedBoard, cfg)
+		diffResult, err := markdown.Diff(originalBoard, editedBoard, cfg)
 		if err != nil {
 			fmt.Printf("Failed to analyse differences between original and edited content: %v", err)
 			return
 		}
 
-		if len(actions) == 0 {
+		if len(diffResult.QuickActions) == 0 {
 			fmt.Println("No logical changes detected.")
 			return
 		}
 
-		fmt.Printf("\nDetected %d change(s):\n", len(actions))
+		fmt.Printf("\nDetected %d change(s):\n", len(diffResult.QuickActions))
 
 		fmt.Println("\nApplying changes...")
-		applyActionsInOrder(actions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
+		applyActionsInOrder(diffResult.QuickActions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
 		fmt.Println("\nBoard updated successfully!")
 	},
 }

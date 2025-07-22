@@ -8,15 +8,20 @@ import (
 	"github.com/vinzmyko/mdello/trello"
 )
 
-func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]TrelloAction, error) {
-	actions := make([]TrelloAction, 0)
+func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) (*DiffResult, error) {
+	quickActions := make([]TrelloAction, 0)
+	detailedTrelloAction := make([]detailedTrelloAction, 0)
 
 	if originalBoard.Name != editedBoard.Name {
-		actions = append(actions, UpdateBoardNameAction{
+		quickActions = append(quickActions, UpdateBoardNameAction{
 			BoardID: originalBoard.ID,
 			OldName: originalBoard.Name,
 			NewName: editedBoard.Name,
 		})
+	}
+
+	if editedBoard.DetailedEdit {
+		detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTBoard, originalBoard.ID))
 	}
 
 	originalLabelsMap := make(map[string]*trello.Label)
@@ -48,7 +53,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 	for labelID, originalLabel := range originalLabelsMap {
 		if editedLabel, exists := editedLabelsMap[labelID]; exists {
 			if originalLabel.Name != editedLabel.Name {
-				actions = append(actions, UpdateLabelName{
+				quickActions = append(quickActions, UpdateLabelName{
 					ID:      originalLabel.ID,
 					OldName: originalLabel.Name,
 					NewName: editedLabel.Name,
@@ -56,7 +61,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			}
 
 			if originalLabel.Colour != editedLabel.Colour {
-				actions = append(actions, UpdateLabelColour{
+				quickActions = append(quickActions, UpdateLabelColour{
 					ID:        originalLabel.ID,
 					Name:      originalLabel.Name,
 					OldColour: originalLabel.Colour,
@@ -65,7 +70,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			}
 
 		} else {
-			actions = append(actions, DeleteLabelAction{
+			quickActions = append(quickActions, DeleteLabelAction{
 				ID:   originalLabel.ID,
 				Name: originalLabel.Name,
 			})
@@ -74,7 +79,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 
 	for labelID, editedLabel := range editedLabelsMap {
 		if _, exists := originalLabelsMap[labelID]; !exists {
-			actions = append(actions, CreateLabelAction{
+			quickActions = append(quickActions, CreateLabelAction{
 				BoardID: originalBoard.ID,
 				Name:    editedLabel.Name,
 				Colour:  editedLabel.Colour,
@@ -95,7 +100,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 	for listID, originalList := range originalListsMap {
 		if editedList, exists := editedListMap[listID]; exists {
 			if originalList.name != editedList.name {
-				actions = append(actions, UpdateListNameAction{
+				quickActions = append(quickActions, UpdateListNameAction{
 					ListID:  originalList.id,
 					OldName: originalList.name,
 					NewName: editedList.name,
@@ -103,12 +108,16 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			}
 
 			if originalList.markdownIdx != editedList.markdownIdx {
-				actions = append(actions, UpdateListPositionAction{
+				quickActions = append(quickActions, UpdateListPositionAction{
 					ListID:      originalList.id,
 					Name:        originalList.name,
 					OldPosition: originalList.markdownIdx,
 					NewPosition: editedList.markdownIdx,
 				})
+			}
+
+			if editedList.detailedEdit {
+				detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTList, originalList.id))
 			}
 
 			originalCardsMap := make(map[string]*parsedCard)
@@ -124,7 +133,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			for cardID, originalCard := range originalCardsMap {
 				if editedCard, exists := editedCardsMap[cardID]; exists {
 					if originalCard.position != editedCard.position {
-						actions = append(actions, UpdateCardPositionAction{
+						quickActions = append(quickActions, UpdateCardPositionAction{
 							CardID:      originalCard.id,
 							Name:        originalCard.name,
 							OldPosition: originalCard.position,
@@ -136,12 +145,16 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 					if err != nil {
 						return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 					}
-					actions = append(actions, cardActions...)
+					quickActions = append(quickActions, cardActions...)
+
+					if editedCard.detailedEdit {
+						detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTCard, editedCard.id))
+					}
 
 				} else {
 					// Checks to see if the cardID exists in another list, if it does exist it's moved to another list
 					if movedCard, movedToAnotherList := allEditedCards[cardID]; movedToAnotherList {
-						actions = append(actions, MoveCardAction{
+						quickActions = append(quickActions, MoveCardAction{
 							CardID:   cardID,
 							Name:     movedCard.name,
 							FromList: originalList.id,
@@ -153,10 +166,10 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 						if err != nil {
 							return nil, fmt.Errorf("error checking card properties for card '%s': %w", originalCard.name, err)
 						}
-						actions = append(actions, cardActions...)
+						quickActions = append(quickActions, cardActions...)
 
 					} else {
-						actions = append(actions, DeleteCardAction{
+						quickActions = append(quickActions, DeleteCardAction{
 							CardID: originalCard.id,
 							Name:   originalCard.name,
 						})
@@ -170,7 +183,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 						isComplete := strings.ToLower(editedCard.isComplete) == "x"
 
 						// Composition when creating a new card
-						actions = append(actions, CreateCardAction{
+						quickActions = append(quickActions, CreateCardAction{
 							ListName:    editedList.name,
 							Name:        editedCard.name,
 							Position:    editedCard.position,
@@ -178,7 +191,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 						})
 
 						for _, labelName := range editedCard.labels {
-							actions = append(actions, AddCardLabelAction{
+							quickActions = append(quickActions, AddCardLabelAction{
 								CardID:    cardID,
 								CardName:  editedCard.name,
 								LabelName: labelName,
@@ -190,7 +203,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 							if err != nil {
 								return nil, fmt.Errorf("invalid due date format: %w", err)
 							}
-							actions = append(actions, UpdateCardDueDate{
+							quickActions = append(quickActions, UpdateCardDueDate{
 								CardID: cardID,
 								Name:   editedCard.name,
 								Due:    rfcDateFormat,
@@ -202,7 +215,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			}
 
 		} else {
-			actions = append(actions, ArchiveListAction{
+			quickActions = append(quickActions, ArchiveListAction{
 				ListID: originalList.id,
 				Name:   originalList.name,
 				Value:  true,
@@ -212,7 +225,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 
 	for listID, editedList := range editedListMap {
 		if _, exists := originalListsMap[listID]; !exists {
-			actions = append(actions, CreateListAction{
+			quickActions = append(quickActions, CreateListAction{
 				BoardID:  originalBoard.ID,
 				Name:     editedList.name,
 				Position: editedList.markdownIdx,
@@ -221,7 +234,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 			for _, editedCard := range editedList.cards {
 				isComplete := strings.ToLower(editedCard.isComplete) == "x"
 
-				actions = append(actions, CreateCardAction{
+				quickActions = append(quickActions, CreateCardAction{
 					ListName:    editedList.name,
 					Name:        editedCard.name,
 					Position:    editedCard.position,
@@ -229,7 +242,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 				})
 
 				for _, labelName := range editedCard.labels {
-					actions = append(actions, AddCardLabelAction{
+					quickActions = append(quickActions, AddCardLabelAction{
 						CardID:    editedCard.id,
 						CardName:  editedCard.name,
 						LabelName: labelName,
@@ -241,7 +254,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 					if err != nil {
 						return nil, fmt.Errorf("invalid due date format: %w", err)
 					}
-					actions = append(actions, UpdateCardDueDate{
+					quickActions = append(quickActions, UpdateCardDueDate{
 						CardID: editedCard.id,
 						Name:   editedCard.name,
 						Due:    rfcDateFormat,
@@ -252,7 +265,12 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) ([]Trello
 		}
 	}
 
-	return actions, nil
+	diffResult := DiffResult{
+		QuickActions:    quickActions,
+		DetailedActions: detailedTrelloAction,
+	}
+
+	return &diffResult, nil
 }
 
 func checkCardProperties(originalCard, editedCard *parsedCard, cfg *config.Config) ([]TrelloAction, error) {
@@ -328,4 +346,11 @@ func checkCardProperties(originalCard, editedCard *parsedCard, cfg *config.Confi
 	}
 
 	return actions, nil
+}
+
+func createDetailedAction(objectType ObjectType, objectID string) detailedTrelloAction {
+	return detailedTrelloAction{
+		ObjectType: objectType,
+		ObjectID:   objectID,
+	}
 }
