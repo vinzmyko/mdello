@@ -62,38 +62,121 @@ func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction) string {
 	for _, detailedAction := range detailedActions {
 		switch detailedAction.ObjectType {
 		case OTBoard:
-			content.WriteString(GenerateDetailedBoardContent(detailedAction))
+
 		case OTList:
-			content.WriteString(GenerateDetailedListContent(detailedAction))
+
 		case OTCard:
-			content.WriteString(GenerateDetailedCardContent(detailedAction))
+
 		}
 	}
 	return content.String()
 }
 
-func GenerateDetailedBoardContent(action detailedTrelloAction) string {
+func GenerateDetailedBoardContent(action detailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
 	var content strings.Builder
+
+	board, err := trelloClient.GetBoard(string(action.ObjectID))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get board when generating detailed board content: %w", err)
+	}
 
 	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
 
-	return content.String()
+	content.WriteString("\n## Description\n")
+	content.WriteString("=== DESCRIPTION START ===\n")
+	if board.Desc != "" {
+		content.WriteString(board.Desc)
+	}
+	content.WriteString("\n=== DESCRIPTION END ===\n")
+
+	content.WriteString("\n## Board Settings\n")
+	content.WriteString(fmt.Sprintf("Name: %s\n", board.Name))
+	content.WriteString(fmt.Sprintf("Closed: %t  # [true|false] – whether the board is archived/deactivated\n", board.Closed))
+
+	content.WriteString("\n## Permissions\n")
+	content.WriteString(fmt.Sprintf("Permission Level: %s  # [org|private|public] – board visibility\n", board.Prefs.PermissionLevel))
+	content.WriteString(fmt.Sprintf("Voting: %s  # [disabled|members|observers|org|public] – who can vote on cards\n", board.Prefs.Voting))
+	content.WriteString(fmt.Sprintf("Comments: %s  # [disabled|members|observers|org|public] – who can comment\n", board.Prefs.Comments))
+	content.WriteString(fmt.Sprintf("Invitations: %s  # [admins|members] – who can invite new members\n", board.Prefs.Invitations))
+
+	content.WriteString("\n## Display Preferences\n")
+	content.WriteString(fmt.Sprintf("Self Join: %t  # allow users to join without invite\n", board.Prefs.SelfJoin))
+	content.WriteString(fmt.Sprintf("Card Covers: %t  # display images on card fronts\n", board.Prefs.CardCovers))
+	content.WriteString(fmt.Sprintf("Hide Votes: %t  # hide member vote counts on cards\n", board.Prefs.HideVotes))
+	content.WriteString(fmt.Sprintf("Card Aging: %s  # [regular|pirate] – visual aging of neglected cards\n", board.Prefs.CardAging))
+	content.WriteString(fmt.Sprintf("Calendar Feed: %t  # enable .ics feed for calendar integrations\n", board.Prefs.CalendarFeedEnabled))
+
+	content.WriteString("\n\n")
+	return content.String(), nil
 }
 
-func GenerateDetailedListContent(action detailedTrelloAction) string {
+func GenerateDetailedListContent(action detailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
 	var content strings.Builder
+
+	list, err := trelloClient.GetList(string(action.ObjectID))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get list when generating detailed list content: %w", err)
+	}
 
 	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
 
-	return content.String()
+	content.WriteString("\n## List Settings\n")
+	content.WriteString(fmt.Sprintf("Name: %s\n", list.Name))
+	content.WriteString(fmt.Sprintf("Closed: %t  # [true|false] - Archive this list\n", list.Closed))
+	content.WriteString(fmt.Sprintf("Position: %d\n", int(list.Pos)))
+	content.WriteString(fmt.Sprintf("Subscribed: %t  # [true|false] - Get notifications for this list\n", list.Subscribed))
+
+	content.WriteString("\n\n")
+
+	return content.String(), nil
 }
 
-func GenerateDetailedCardContent(action detailedTrelloAction) string {
+func GenerateDetailedCardContent(action detailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
 	var content strings.Builder
+
+	card, err := trelloClient.GetCard(string(action.ObjectID))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get card when generating detailed card content: %w", err)
+	}
 
 	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
 
-	return content.String()
+	content.WriteString("\n## Description\n")
+	content.WriteString("=== DESCRIPTION START ===\n")
+	if card.Desc != "" {
+		content.WriteString(card.Desc)
+	}
+	content.WriteString("\n=== DESCRIPTION END ===\n")
+
+	content.WriteString("\n## Basic Settings\n")
+	content.WriteString(fmt.Sprintf("Name: %s\n", card.Name))
+	content.WriteString(fmt.Sprintf("Closed: %t  # – archived state\n", card.Closed))
+	content.WriteString(fmt.Sprintf("Position: %d \n", int(card.Pos)))
+	content.WriteString(fmt.Sprintf("Subscribed: %t  # [true|false] – receive notifications on card activity\n", card.Subscribed))
+
+	content.WriteString("\n## Scheduling\n")
+
+	empty := ""
+	if card.Badges.Start != &empty {
+		formattedStart := formatDate(*card.Badges.Start, cfg)
+		content.WriteString(fmt.Sprintf("Start: %s \n", formattedStart))
+	} else {
+		content.WriteString("Start Date:   # (leave empty for no start date)\n")
+	}
+
+	if card.Due != &empty {
+		formattedDue := formatDate(*card.Due, cfg)
+		content.WriteString(fmt.Sprintf("Due: %s  # due date\n", formattedDue))
+	} else {
+		content.WriteString("Due Date:   # (leave empty for no due date)\n")
+	}
+
+
+	content.WriteString(fmt.Sprintf("Due Complete: %t  # [true|false] – if card is marked done\n", card.Badges.DueComplete))
+
+	content.WriteString("\n\n")
+
+	return content.String(), nil
 }
 
 const sectionHeaderSeparatorLength = 77
