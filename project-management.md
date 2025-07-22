@@ -69,15 +69,25 @@
               detailedActions []TrelloAction. I am just giving ideas ✅
     - We would need a way to put a lot of the specific edits into one markdown file and then process each section as separate api requests after the first markdown file ✅
     - These api trello call changes should happen after the quick changes. We should get the new data based on the quick changes ✅
-    - Fill in the GenerateDetailedXContent with things that the user can change for detailed information.
-        - Might need to pass in the *trello.TrelloClient to get the data about it.
-        - Decide which params the user can edit and display then in the Generate function
+    - Fill in the GenerateDetailedXContent with things that the user can change for detailed information. ✅
+        - Decide which params the user can edit and display then in the Generate function ✅
+        - Might need to pass in the *trello.TrelloClient to get the data about it. definitely ✅
     - Create another function in from_markdown.go that analyses the string content with readers and such
+        - I guess this should go into diff.go since we don't need to create two versions since everything will be there. We need a way to track the trello object ideas
+          for the UpdateXParams. 
+        - We should do the section thing but we will need to compare both the originalContent and the editedContent.
+
+- from_markdown.go's job is to parse it into the ParsedTrello objects that maps id's so maybe we only need to deal with it in diff.go
+
+diff.go?
+- When parsing the detailed list. We should firstly check to see if the originalDetailedActions and the editedDetailedActionsMarkdown are the same if yes then abort
+- We then probably can check the a section and then parse that to see if there is changes if not then skip if yes then call the UpdateX withe UpdateXParams
 
 ## Queued Up
 - Create a `board --view/web` in which it opens your prefered browser to look at your tasks
 
 ## Backlog
+- Add the checklist implementation in the detailedActions markdown section
 - in actions.go update all the `return err` into `return fmt.Errorf()`
 - If there are not invalid commands ask the user to fix it
 - When I didn't have net and tried to do cli command I got a weird error. Error wasn't obvious that my internet was down so fix that
