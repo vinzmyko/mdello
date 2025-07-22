@@ -3,25 +3,28 @@ package markdown
 import "github.com/vinzmyko/mdello/trello"
 
 type ParsedBoard struct {
-	ID     string
-	Name   string
-	Lists  []*parsedList
-	Labels []*trello.Label
+	ID           string
+	Name         string
+	Lists        []*parsedList
+	Labels       []*trello.Label
+	DetailedEdit bool
 }
 
 type parsedList struct {
-	id          string
-	name        string
-	markdownIdx int
-	cards       []*parsedCard
+	id           string
+	name         string
+	markdownIdx  int
+	cards        []*parsedCard
+	detailedEdit bool
 }
 
 type parsedCard struct {
-	id         string
-	listID     string
-	name       string
-	position   int
-	isComplete string
-	labels     []string
-	dueDate    string
+	id           string
+	listID       string
+	name         string
+	position     int
+	isComplete   string
+	labels       []string
+	dueDate      string
+	detailedEdit bool
 }

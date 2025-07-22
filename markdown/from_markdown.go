@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	boardRegex        = regexp.MustCompile(`^# (.+?)(?:\{([^}]+)\})?$`)
+	boardRegex        = regexp.MustCompile(`^# (.+?)(?:\{([^}]+)\})?(!)?$`)
 	labelPatternRegex = regexp.MustCompile(`@([^:]+):([^:\s]+)(?:\s*\{([^}]+)\})?`)
 
-	listRegex = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?$`)
+	listRegex = regexp.MustCompile(`^## (.+?)(?:\{([^}]+)\})?(!)?$`)
 
-	cardRegex      = regexp.MustCompile(`^- \[([ xX]?)\] (.+)$`)
+	cardRegex      = regexp.MustCompile(`^- \[([ xX]?)\] (.+?)(!)?$`)
 	cardLabelRegex = regexp.MustCompile(`@([^:\s{]+)`)
 	cardDueRegex   = regexp.MustCompile(`due:([\d-]+(?:\s+[\d:]+)?)`)
 	cardIDRegex    = regexp.MustCompile(`\{([^}]+)\}`)
@@ -26,7 +26,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 	scanner := bufio.NewScanner(r)
 	lineNum := 0
 
-	parsedData := &ParsedBoard{
+	parsedBoard := &ParsedBoard{
 		Lists:  make([]*parsedList, 0),
 		Labels: make([]*trello.Label, 0),
 	}
@@ -42,13 +42,14 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 			continue
 		}
 
-		if name, id := extractNameAndID(boardRegex, line); name != "" {
+		if name, id, detailedEdit := parseHeadingFields(boardRegex, line); name != "" {
 			resolvedBoardID, err := boardSession.ResolveShortID(id)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
 			}
-			parsedData.Name = name
-			parsedData.ID = resolvedBoardID
+			parsedBoard.Name = name
+			parsedBoard.ID = resolvedBoardID
+			parsedBoard.DetailedEdit = detailedEdit
 			inLabelSection = true
 			continue // This line is a board and has been processed go next line
 		}
@@ -58,26 +59,28 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 			if label, err := extractBoardLabels(line, boardSession); err != nil {
 				return nil, fmt.Errorf("error parsing board label: %w", err)
 			} else if label != nil {
-				parsedData.Labels = append(parsedData.Labels, label)
+				parsedBoard.Labels = append(parsedBoard.Labels, label)
 				continue
 			}
 		}
 
-		if name, id := extractNameAndID(listRegex, line); name != "" {
+		if name, id, detailedEdit := parseHeadingFields(listRegex, line); name != "" {
 			inLabelSection = false
 			resolvedListID, err := boardSession.ResolveShortID(id)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
 			}
 			newList := &parsedList{
-				id:          resolvedListID,
-				name:        name,
-				markdownIdx: listPosition,
-				cards:       make([]*parsedCard, 0),
+				id:           resolvedListID,
+				name:         name,
+				markdownIdx:  listPosition,
+				cards:        make([]*parsedCard, 0),
+				detailedEdit: detailedEdit,
 			}
-			parsedData.Lists = append(parsedData.Lists, newList)
+			parsedBoard.Lists = append(parsedBoard.Lists, newList)
 			currentList = newList
 			listPosition++
+
 			continue
 		}
 
@@ -103,7 +106,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 		return nil, fmt.Errorf("error reading markdown source: %w", err)
 	}
 
-	return parsedData, nil
+	return parsedBoard, nil
 }
 
 func parseCardLine(line string, listID string, boardSession *BoardSession) (*parsedCard, error) {
@@ -124,6 +127,10 @@ func parseCardLine(line string, listID string, boardSession *BoardSession) (*par
 
 	if idMatch := cardIDRegex.FindStringSubmatch(cardText); len(idMatch) > 1 {
 		id = idMatch[1]
+	}
+	var detailedEdit bool
+	if len(matches) > 3 && matches[3] == "!" {
+		detailedEdit = true
 	}
 
 	tempText := cardText
@@ -152,27 +159,31 @@ func parseCardLine(line string, listID string, boardSession *BoardSession) (*par
 	cleanText = strings.TrimSpace(cleanText)
 
 	var card = &parsedCard{
-		id:         resolvedCardID,
-		name:       cleanText,
-		listID:     listID,
-		isComplete: cardIsCompleted,
-		labels:     cardLabels,
-		dueDate:    dueDate,
+		id:           resolvedCardID,
+		name:         cleanText,
+		listID:       listID,
+		isComplete:   cardIsCompleted,
+		labels:       cardLabels,
+		dueDate:      dueDate,
+		detailedEdit: detailedEdit,
 	}
 
 	return card, nil
 }
 
-func extractNameAndID(re *regexp.Regexp, line string) (name, id string) {
+func parseHeadingFields(re *regexp.Regexp, line string) (name, id string, detailedEdit bool) {
 	matches := re.FindStringSubmatch(line)
 	if len(matches) < 2 {
-		return "", ""
+		return "", "", false
 	}
 	name = strings.TrimSpace(matches[1])
 	if len(matches) > 2 && matches[2] != "" {
 		id = strings.TrimSpace(matches[2])
 	}
-	return name, id
+	if len(matches) > 3 && matches[3] == "!" {
+		detailedEdit = true
+	}
+	return name, id, detailedEdit
 }
 
 func extractBoardLabels(line string, boardSession *BoardSession) (*trello.Label, error) {
