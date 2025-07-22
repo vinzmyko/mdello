@@ -91,9 +91,13 @@ var boardCmd = &cobra.Command{
 			fmt.Printf("\nFound %d item(s) marked for detailed editing.\n", len(diffResult.DetailedActions))
 			fmt.Println("Generating detailed editor...")
 
-			detailedContent := markdown.GenerateDetailedMarkdown(diffResult.DetailedActions)
+			detailedContent, err := markdown.GenerateDetailedMarkdown(diffResult.DetailedActions, trelloClient, cfg)
+			if err != nil {
+				fmt.Printf("\nFailed to generate detailed markdown file: %v", err)
+			}
+
 			//detailedEditedContent, err := openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
-			_, err := openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
+			_, err = openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
 			if err != nil {
 				fmt.Printf("\n Failed to open editor for detailed edit editor: %v", err)
 			}

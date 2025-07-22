@@ -57,19 +57,31 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 	return markdown.String(), session, nil
 }
 
-func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction) string {
+func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
 	var content strings.Builder
 	for _, detailedAction := range detailedActions {
 		switch detailedAction.ObjectType {
 		case OTBoard:
-
+			boardContent, err := GenerateDetailedBoardContent(detailedAction, trelloClient)
+			if err != nil {
+				return "", err
+			}
+			content.WriteString(boardContent)
 		case OTList:
-
+			listContent, err := GenerateDetailedListContent(detailedAction, trelloClient)
+			if err != nil {
+				return "", err
+			}
+			content.WriteString(listContent)
 		case OTCard:
-
+			cardContent, err := GenerateDetailedCardContent(detailedAction, trelloClient, cfg)
+			if err != nil {
+				return "", err
+			}
+			content.WriteString(cardContent)
 		}
 	}
-	return content.String()
+	return content.String(), nil
 }
 
 func GenerateDetailedBoardContent(action detailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
