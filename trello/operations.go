@@ -134,6 +134,28 @@ func (t *TrelloClient) GetBoardLabels(boardID string) ([]Label, error) {
 	return labels, nil
 }
 
+func (t *TrelloClient) GetList(listID string) (*List, error) {
+	var list List
+
+	path := fmt.Sprintf("/lists/%s", listID)
+	err := t.doRequest("GET", path, nil, &list)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get list: %w", err)
+	}
+	return &list, nil
+}
+
+func (t *TrelloClient) GetCard(cardID string) (*Card, error) {
+	var card Card
+
+	path := fmt.Sprintf("/cards/%s", cardID)
+	err := t.doRequest("GET", path, nil, &card)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card: %w", err)
+	}
+	return &card, nil
+}
+
 func (t *TrelloClient) GetBoards() ([]Board, error) {
 	var boards []Board
 

@@ -6,7 +6,7 @@ type Board struct {
 	ID                string       `json:"id"`
 	Name              string       `json:"name"`
 	Desc              string       `json:"desc"`
-	DescData          string       `json:"descData"`
+	DescData          DescData     `json:"descData"`
 	Closed            bool         `json:"closed"`
 	IdMemberCreator   string       `json:"idMemberCreator"`
 	IdOrganisation    string       `json:"idOrganization"`
@@ -33,8 +33,13 @@ type Board struct {
 	EnterpriseOwned   bool         `json:"enterpriseOwned"`
 }
 
+type DescData struct {
+	Emoji map[string]any `json:"emoji,omitempty"`
+}
+
 type BoardPrefs struct {
 	PermissionLevel        string                 `json:"permissionLevel"`
+	Invitations            string                 `json:"invitations"`
 	HideVotes              bool                   `json:"hideVotes"`
 	Voting                 string                 `json:"voting"`
 	Comments               string                 `json:"comments"`
