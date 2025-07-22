@@ -21,7 +21,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) (*DiffRes
 	}
 
 	if editedBoard.DetailedEdit {
-		detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTBoard, originalBoard.ID))
+		detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTBoard, originalBoard.ID, editedBoard.Name))
 	}
 
 	originalLabelsMap := make(map[string]*trello.Label)
@@ -117,7 +117,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) (*DiffRes
 			}
 
 			if editedList.detailedEdit {
-				detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTList, originalList.id))
+				detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTList, originalList.id, editedList.name))
 			}
 
 			originalCardsMap := make(map[string]*parsedCard)
@@ -148,7 +148,7 @@ func Diff(originalBoard, editedBoard *ParsedBoard, cfg *config.Config) (*DiffRes
 					quickActions = append(quickActions, cardActions...)
 
 					if editedCard.detailedEdit {
-						detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTCard, editedCard.id))
+						detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(OTCard, editedCard.id, editedCard.name))
 					}
 
 				} else {
@@ -348,9 +348,10 @@ func checkCardProperties(originalCard, editedCard *parsedCard, cfg *config.Confi
 	return actions, nil
 }
 
-func createDetailedAction(objectType ObjectType, objectID string) detailedTrelloAction {
+func createDetailedAction(objectType ObjectType, objectID string, objectName string) detailedTrelloAction {
 	return detailedTrelloAction{
 		ObjectType: objectType,
 		ObjectID:   objectID,
+		ObjectName: objectName,
 	}
 }

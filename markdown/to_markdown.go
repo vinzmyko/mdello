@@ -57,6 +57,53 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 	return markdown.String(), session, nil
 }
 
+func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction) string {
+	var content strings.Builder
+	for _, detailedAction := range detailedActions {
+		switch detailedAction.ObjectType {
+		case OTBoard:
+			content.WriteString(GenerateDetailedBoardContent(detailedAction))
+		case OTList:
+			content.WriteString(GenerateDetailedListContent(detailedAction))
+		case OTCard:
+			content.WriteString(GenerateDetailedCardContent(detailedAction))
+		}
+	}
+	return content.String()
+}
+
+func GenerateDetailedBoardContent(action detailedTrelloAction) string {
+	var content strings.Builder
+
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+
+	return content.String()
+}
+
+func GenerateDetailedListContent(action detailedTrelloAction) string {
+	var content strings.Builder
+
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+
+	return content.String()
+}
+
+func GenerateDetailedCardContent(action detailedTrelloAction) string {
+	var content strings.Builder
+
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+
+	return content.String()
+}
+
+const sectionHeaderSeparatorLength = 77
+
+func generateSectionHeader(title, objectType string) string {
+	separator := strings.Repeat("=", sectionHeaderSeparatorLength)
+	return fmt.Sprintf("# %s\n# EDITING %s: %s\n# %s\n",
+		separator, strings.ToUpper(objectType), title, separator)
+}
+
 func formatDate(due string, configuration *config.Config) string {
 	parsedTime, err := time.Parse(time.RFC3339, due)
 	if err != nil {

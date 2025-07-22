@@ -37,6 +37,7 @@ type DiffResult struct {
 type detailedTrelloAction struct {
 	ObjectType ObjectType
 	ObjectID   string
+	ObjectName string
 }
 
 type ObjectType string
