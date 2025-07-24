@@ -27,6 +27,7 @@ func Execute(trelloAPIKey string, configuration *config.Config) {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(boardsCmd)
 	rootCmd.AddCommand(boardCmd)
+	rootCmd.AddCommand(openCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
