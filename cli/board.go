@@ -95,15 +95,34 @@ var boardCmd = &cobra.Command{
 			detailedContent, err := markdown.GenerateDetailedMarkdown(diffResult.DetailedActions, trelloClient, cfg)
 			if err != nil {
 				fmt.Printf("\nFailed to generate detailed markdown file: %v", err)
+				return
 			}
 
-			//detailedEditedContent, err := openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
-			_, err = openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
+			detailedEditedContent, err := openEditorForContent(detailedContent, fmt.Sprintf("mdello-%s-detailed", safeName))
 			if err != nil {
-				fmt.Printf("\n Failed to open editor for detailed edit editor: %v", err)
+				fmt.Printf("\nFailed to open editor for detailed edit: %v", err)
+				return
 			}
 
-			fmt.Println("Detailed changes applied!")
+			// Check if user made any changes
+			if detailedEditedContent == detailedContent {
+				fmt.Println("No detailed changes made.")
+				return
+			}
+
+			detailedActions, err := diff.DetailedActionsDiff(detailedContent, detailedEditedContent, cfg)
+			if err != nil {
+				fmt.Printf("\nFailed to analyze detailed changes: %v", err)
+				return
+			}
+
+			if len(detailedActions) > 0 {
+				fmt.Printf("Applying %d detailed change(s)...\n", len(detailedActions))
+				applyActionsInOrder(detailedActions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
+				fmt.Println("Detailed changes applied!")
+			} else {
+				fmt.Println("No actionable detailed changes detected.")
+			}
 		}
 		fmt.Println("\nBoard updated successfully!")
 	},

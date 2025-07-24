@@ -61,19 +61,19 @@ func GenerateDetailedMarkdown(detailedActions []DetailedTrelloAction, trelloClie
 	var content strings.Builder
 	for _, detailedAction := range detailedActions {
 		switch detailedAction.ObjectType {
-		case OTBoard:
+		case "board":
 			boardContent, err := GenerateDetailedBoardContent(detailedAction, trelloClient)
 			if err != nil {
 				return "", err
 			}
 			content.WriteString(boardContent)
-		case OTList:
+		case "list":
 			listContent, err := GenerateDetailedListContent(detailedAction, trelloClient)
 			if err != nil {
 				return "", err
 			}
 			content.WriteString(listContent)
-		case OTCard:
+		case "card":
 			cardContent, err := GenerateDetailedCardContent(detailedAction, trelloClient, cfg)
 			if err != nil {
 				return "", err
@@ -182,7 +182,6 @@ func GenerateDetailedCardContent(action DetailedTrelloAction, trelloClient *trel
 	} else {
 		content.WriteString("Due Date:   # (leave empty for no due date)\n")
 	}
-
 
 	content.WriteString(fmt.Sprintf("Due Complete: %t  # [true|false] – if card is marked done\n", card.Badges.DueComplete))
 

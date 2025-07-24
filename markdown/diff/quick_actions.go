@@ -22,7 +22,7 @@ func QuickActionsDiff(originalBoard, editedBoard *markdown.ParsedBoard, cfg *con
 	}
 
 	if editedBoard.DetailedEdit {
-		detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(markdown.OTBoard, originalBoard.ID, editedBoard.Name))
+		detailedTrelloAction = append(detailedTrelloAction, createDetailedAction("board", originalBoard.ID, editedBoard.Name))
 	}
 
 	originalLabelsMap := make(map[string]*trello.Label)
@@ -118,7 +118,7 @@ func QuickActionsDiff(originalBoard, editedBoard *markdown.ParsedBoard, cfg *con
 			}
 
 			if editedList.DetailedEdit {
-				detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(markdown.OTList, originalList.ID, editedList.Name))
+				detailedTrelloAction = append(detailedTrelloAction, createDetailedAction("list", originalList.ID, editedList.Name))
 			}
 
 			originalCardsMap := make(map[string]*markdown.ParsedCard)
@@ -149,7 +149,7 @@ func QuickActionsDiff(originalBoard, editedBoard *markdown.ParsedBoard, cfg *con
 					quickActions = append(quickActions, cardActions...)
 
 					if editedCard.DetailedEdit {
-						detailedTrelloAction = append(detailedTrelloAction, createDetailedAction(markdown.OTCard, editedCard.ID, editedCard.Name))
+						detailedTrelloAction = append(detailedTrelloAction, createDetailedAction("card", editedCard.ID, editedCard.Name))
 					}
 
 				} else {
@@ -349,7 +349,7 @@ func checkCardProperties(originalCard, editedCard *markdown.ParsedCard, cfg *con
 	return actions, nil
 }
 
-func createDetailedAction(objectType markdown.ObjectType, objectID string, objectName string) markdown.DetailedTrelloAction {
+func createDetailedAction(objectType string, objectID string, objectName string) markdown.DetailedTrelloAction {
 	return markdown.DetailedTrelloAction{
 		ObjectType: objectType,
 		ObjectID:   objectID,
