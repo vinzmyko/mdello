@@ -159,12 +159,6 @@ type UpdateBoardParams struct {
 	PrefsBackground          *string `json:"prefs/background,omitempty"`          // The id of a custom background or one of: blue, orange, green, red, purple, pink, lime, sky, grey
 	PrefsCardAging           *string `json:"prefs/cardAging,omitempty"`           // One of: pirate, regular
 	PrefsCalendarFeedEnabled *bool   `json:"prefs/calendarFeedEnabled,omitempty"` // Determines whether the calendar feed is enabled or not.
-	LabelNamesGreen          *string `json:"labelNames/green,omitempty"`          // Name for the green label. 1 to 16384 characters long
-	LabelNamesYellow         *string `json:"labelNames/yellow,omitempty"`
-	LabelNamesOrange         *string `json:"labelNames/orange,omitempty"`
-	LabelNamesRed            *string `json:"labelNames/red,omitempty"`
-	LabelNamesPurple         *string `json:"labelNames/purple,omitempty"`
-	LabelNamesBlue           *string `json:"labelNames/blue,omitempty"`
 }
 
 // ========== LABEL ==========
