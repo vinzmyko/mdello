@@ -18,7 +18,109 @@ type ActionContext struct {
 	BoardID string
 }
 
+func CreateBulkUpdateAction(section DetailedTrelloAction, changedFields map[string]any, oldValues, newValues map[string]string) (TrelloAction, error) {
+	switch section.ObjectType {
+	case "board":
+		return DetailedUpdateBoardAction{
+			BoardID:       section.ObjectID,
+			UpdatedFields: changedFields,
+			OldValues:     oldValues,
+			NewValues:     newValues,
+		}, nil
+	case "list":
+		return DetailedUpdateListAction{
+			ListID:        section.ObjectID,
+			UpdatedFields: changedFields,
+			OldValues:     oldValues,
+			NewValues:     newValues,
+		}, nil
+	case "card":
+		return DetailedUpdateCardAction{
+			CardID:        section.ObjectID,
+			UpdatedFields: changedFields,
+			OldValues:     oldValues,
+			NewValues:     newValues,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown object type: %s", section.ObjectType)
+	}
+}
+
 // === BOARD ACTIONS ===
+type DetailedUpdateBoardAction struct {
+	BoardID       string
+	UpdatedFields map[string]any
+	OldValues     map[string]string
+	NewValues     map[string]string
+}
+
+func (detailedAct DetailedUpdateBoardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
+	params := &trello.UpdateBoardParams{
+		ID: detailedAct.BoardID,
+	}
+
+	for apiFieldName, value := range detailedAct.UpdatedFields {
+		switch apiFieldName {
+		case "name":
+			if strVal, ok := value.(string); ok {
+				params.Name = &strVal
+			}
+		case "desc":
+			if strVal, ok := value.(string); ok {
+				params.Desc = &strVal
+			}
+		case "closed":
+			if boolVal, ok := value.(bool); ok {
+				params.Closed = &boolVal
+			}
+		case "prefs/permissionLevel":
+			if strVal, ok := value.(string); ok {
+				params.PrefsPermissionLevel = &strVal
+			}
+		case "prefs/selfJoin":
+			if boolVal, ok := value.(bool); ok {
+				params.PrefsSelfJoin = &boolVal
+			}
+		case "prefs/cardCovers":
+			if boolVal, ok := value.(bool); ok {
+				params.PrefsCardCovers = &boolVal
+			}
+		case "prefs/hideVotes":
+			if boolVal, ok := value.(bool); ok {
+				params.PrefsHideVotes = &boolVal
+			}
+		case "prefs/invitations":
+			if strVal, ok := value.(string); ok {
+				params.PrefsInvitations = &strVal
+			}
+		case "prefs/voting":
+			if strVal, ok := value.(string); ok {
+				params.PrefsVoting = &strVal
+			}
+		case "prefs/comments":
+			if strVal, ok := value.(string); ok {
+				params.PrefsComments = &strVal
+			}
+		case "prefs/cardAging":
+			if strVal, ok := value.(string); ok {
+				params.PrefsCardAging = &strVal
+			}
+		case "prefs/calendarFeedEnabled":
+			if boolVal, ok := value.(bool); ok {
+				params.PrefsCalendarFeedEnabled = &boolVal
+			}
+		default:
+			return fmt.Errorf("unsupported board field: %s", apiFieldName)
+		}
+	}
+
+	_, err := t.UpdateBoard(params)
+	return err
+}
+
+func (detailedAct DetailedUpdateBoardAction) Description() string {
+	return "" // Handled when we are doing individual fields
+}
 
 type UpdateBoardNameAction struct {
 	BoardID string
@@ -116,6 +218,49 @@ func (act DeleteLabelAction) Description() string {
 
 // === LIST ACTIONS ===
 
+type DetailedUpdateListAction struct {
+	ListID        string
+	UpdatedFields map[string]any
+	OldValues     map[string]string
+	NewValues     map[string]string
+}
+
+func (detailedAct DetailedUpdateListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
+	params := &trello.UpdateListParams{
+		ID: detailedAct.ListID,
+	}
+
+	for apiFieldName, value := range detailedAct.UpdatedFields {
+		switch apiFieldName {
+		case "name":
+			if strVal, ok := value.(string); ok {
+				params.Name = &strVal
+			}
+		case "closed":
+			if boolVal, ok := value.(bool); ok {
+				params.Closed = &boolVal
+			}
+		case "pos":
+			if strVal, ok := value.(string); ok {
+				params.Pos = &strVal
+			}
+		case "subscribed":
+			if boolVal, ok := value.(bool); ok {
+				params.Subscribed = &boolVal
+			}
+		default:
+			return fmt.Errorf("unsupported list field: %s", apiFieldName)
+		}
+	}
+
+	_, err := t.UpdateList(params)
+	return err
+}
+
+func (detailedAct DetailedUpdateListAction) Description() string {
+	return ""
+}
+
 type CreateListAction struct {
 	BoardID  string
 	Name     string
@@ -205,6 +350,65 @@ func (act ArchiveListAction) Description() string {
 }
 
 // === CARD ACTIONS ===
+
+type DetailedUpdateCardAction struct {
+	CardID        string
+	UpdatedFields map[string]any
+	OldValues     map[string]string
+	NewValues     map[string]string
+}
+
+func (detailedAct DetailedUpdateCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
+	params := &trello.UpdateCardParams{
+		ID: detailedAct.CardID,
+	}
+
+	for apiFieldName, value := range detailedAct.UpdatedFields {
+		switch apiFieldName {
+		case "name":
+			if strVal, ok := value.(string); ok {
+				params.Name = &strVal
+			}
+		case "desc":
+			if strVal, ok := value.(string); ok {
+				params.Desc = &strVal
+			}
+		case "closed":
+			if boolVal, ok := value.(bool); ok {
+				params.Closed = &boolVal
+			}
+		case "pos":
+			if strVal, ok := value.(string); ok {
+				params.Pos = &strVal
+			}
+		case "subscribed":
+			if boolVal, ok := value.(bool); ok {
+				params.Subscribed = &boolVal
+			}
+		case "start":
+			if strVal, ok := value.(string); ok {
+				params.Start = &strVal
+			}
+		case "due":
+			if strVal, ok := value.(string); ok {
+				params.Due = &strVal
+			}
+		case "dueComplete":
+			if boolVal, ok := value.(bool); ok {
+				params.DueComplete = &boolVal
+			}
+		default:
+			return fmt.Errorf("unsupported card field: %s", apiFieldName)
+		}
+	}
+
+	_, err := t.UpdateCard(params)
+	return err
+}
+
+func (detailedAct DetailedUpdateCardAction) Description() string {
+	return ""
+}
 
 type CreateCardAction struct {
 	ListName    string
