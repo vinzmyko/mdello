@@ -5,36 +5,36 @@ import "github.com/vinzmyko/mdello/trello"
 type ParsedBoard struct {
 	ID           string
 	Name         string
-	Lists        []*parsedList
+	Lists        []*ParsedList
 	Labels       []*trello.Label
 	DetailedEdit bool
 }
 
-type parsedList struct {
-	id           string
-	name         string
-	markdownIdx  int
-	cards        []*parsedCard
-	detailedEdit bool
+type ParsedList struct {
+	ID           string
+	Name         string
+	MarkdownIdx  int
+	Cards        []*ParsedCard
+	DetailedEdit bool
 }
 
-type parsedCard struct {
-	id           string
-	listID       string
-	name         string
-	position     int
-	isComplete   string
-	labels       []string
-	dueDate      string
-	detailedEdit bool
+type ParsedCard struct {
+	ID           string
+	ListID       string
+	Name         string
+	Position     int
+	IsComplete   string
+	Labels       []string
+	DueDate      string
+	DetailedEdit bool
 }
 
 type DiffResult struct {
 	QuickActions    []TrelloAction
-	DetailedActions []detailedTrelloAction
+	DetailedActions []DetailedTrelloAction
 }
 
-type detailedTrelloAction struct {
+type DetailedTrelloAction struct {
 	ObjectType ObjectType
 	ObjectID   string
 	ObjectName string

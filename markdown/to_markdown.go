@@ -57,7 +57,7 @@ func ToMarkdown(trelloClient *trello.TrelloClient, configuration *config.Config,
 	return markdown.String(), session, nil
 }
 
-func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
+func GenerateDetailedMarkdown(detailedActions []DetailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
 	var content strings.Builder
 	for _, detailedAction := range detailedActions {
 		switch detailedAction.ObjectType {
@@ -84,7 +84,7 @@ func GenerateDetailedMarkdown(detailedActions []detailedTrelloAction, trelloClie
 	return content.String(), nil
 }
 
-func GenerateDetailedBoardContent(action detailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
+func GenerateDetailedBoardContent(action DetailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
 	var content strings.Builder
 
 	board, err := trelloClient.GetBoard(string(action.ObjectID))
@@ -122,7 +122,7 @@ func GenerateDetailedBoardContent(action detailedTrelloAction, trelloClient *tre
 	return content.String(), nil
 }
 
-func GenerateDetailedListContent(action detailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
+func GenerateDetailedListContent(action DetailedTrelloAction, trelloClient *trello.TrelloClient) (string, error) {
 	var content strings.Builder
 
 	list, err := trelloClient.GetList(string(action.ObjectID))
@@ -143,7 +143,7 @@ func GenerateDetailedListContent(action detailedTrelloAction, trelloClient *trel
 	return content.String(), nil
 }
 
-func GenerateDetailedCardContent(action detailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
+func GenerateDetailedCardContent(action DetailedTrelloAction, trelloClient *trello.TrelloClient, cfg *config.Config) (string, error) {
 	var content strings.Builder
 
 	card, err := trelloClient.GetCard(string(action.ObjectID))
@@ -209,7 +209,7 @@ func formatDate(due string, configuration *config.Config) string {
 	return parsedTime.Local().Format(configuration.DateFormat)
 }
 
-func parseMarkdownDate(dateStr string, configuration *config.Config) (string, error) {
+func ParseMarkdownDate(dateStr string, configuration *config.Config) (string, error) {
 	parsedTime, err := time.ParseInLocation(configuration.DateFormat, dateStr, time.Local)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse date %s with format %s: %w",

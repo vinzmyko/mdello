@@ -27,11 +27,11 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 	lineNum := 0
 
 	parsedBoard := &ParsedBoard{
-		Lists:  make([]*parsedList, 0),
+		Lists:  make([]*ParsedList, 0),
 		Labels: make([]*trello.Label, 0),
 	}
 
-	var currentList *parsedList
+	var currentList *ParsedList
 	listPosition := 0
 	inLabelSection := false
 
@@ -70,12 +70,12 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to convert board shortID back to trelloID: %w", err)
 			}
-			newList := &parsedList{
-				id:           resolvedListID,
-				name:         name,
-				markdownIdx:  listPosition,
-				cards:        make([]*parsedCard, 0),
-				detailedEdit: detailedEdit,
+			newList := &ParsedList{
+				ID:           resolvedListID,
+				Name:         name,
+				MarkdownIdx:  listPosition,
+				Cards:        make([]*ParsedCard, 0),
+				DetailedEdit: detailedEdit,
 			}
 			parsedBoard.Lists = append(parsedBoard.Lists, newList)
 			currentList = newList
@@ -86,13 +86,13 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 
 		// Parse only after we have a list
 		if currentList != nil {
-			card, err := parseCardLine(line, currentList.id, boardSession)
+			card, err := parseCardLine(line, currentList.ID, boardSession)
 			if err != nil {
 				return nil, err
 			}
 			if card != nil {
-				card.position = len(currentList.cards)
-				currentList.cards = append(currentList.cards, card)
+				card.Position = len(currentList.Cards)
+				currentList.Cards = append(currentList.Cards, card)
 				continue
 			}
 		}
@@ -109,7 +109,7 @@ func FromMarkdown(r io.Reader, boardSession *BoardSession) (*ParsedBoard, error)
 	return parsedBoard, nil
 }
 
-func parseCardLine(line string, listID string, boardSession *BoardSession) (*parsedCard, error) {
+func parseCardLine(line string, listID string, boardSession *BoardSession) (*ParsedCard, error) {
 	matches := cardRegex.FindStringSubmatch(line)
 	if len(matches) < 3 {
 		return nil, fmt.Errorf("%s: Missing checkbox or card text", line)
@@ -158,14 +158,14 @@ func parseCardLine(line string, listID string, boardSession *BoardSession) (*par
 	cleanText = cardIDRegex.ReplaceAllString(cleanText, "")
 	cleanText = strings.TrimSpace(cleanText)
 
-	var card = &parsedCard{
-		id:           resolvedCardID,
-		name:         cleanText,
-		listID:       listID,
-		isComplete:   cardIsCompleted,
-		labels:       cardLabels,
-		dueDate:      dueDate,
-		detailedEdit: detailedEdit,
+	var card = &ParsedCard{
+		ID:           resolvedCardID,
+		Name:         cleanText,
+		ListID:       listID,
+		IsComplete:   cardIsCompleted,
+		Labels:       cardLabels,
+		DueDate:      dueDate,
+		DetailedEdit: detailedEdit,
 	}
 
 	return card, nil

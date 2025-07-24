@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vinzmyko/mdello/markdown"
+	"github.com/vinzmyko/mdello/markdown/diff"
 	"github.com/vinzmyko/mdello/trello"
 )
 
@@ -70,7 +71,7 @@ var boardCmd = &cobra.Command{
 			return
 		}
 
-		diffResult, err := markdown.Diff(originalBoard, editedBoard, cfg)
+		diffResult, err := diff.QuickActionsDiff(originalBoard, editedBoard, cfg)
 		if err != nil {
 			fmt.Printf("Failed to analyse differences between original and edited content: %v", err)
 			return
