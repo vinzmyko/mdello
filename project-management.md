@@ -86,9 +86,11 @@
             - Figure out a way to handle the boolean values with validation ✅
                 - Need to do this with string and position field as well ✅
 
-- Create a `board --view/web` in which it opens your prefered browser to look at your tasks
+- Create a `open` in which it opens your prefered browser to look at your tasks ✅
+- Update the `help` command ✅
 
 ## Queued Up
+- Use cli tool and when you notice bugs write them down and fix
 
 ## Backlog
 - Add the Card checklist implementation in the detailedActions markdown section
