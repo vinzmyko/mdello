@@ -168,15 +168,14 @@ func GenerateDetailedCardContent(action DetailedTrelloAction, trelloClient *trel
 
 	content.WriteString("\n## Scheduling\n")
 
-	empty := ""
-	if card.Badges.Start != &empty {
+	if card.Badges.Start != nil && *card.Badges.Start != "" {
 		formattedStart := formatDate(*card.Badges.Start, cfg)
 		content.WriteString(fmt.Sprintf("Start: %s \n", formattedStart))
 	} else {
 		content.WriteString("Start Date:   # (leave empty for no start date)\n")
 	}
 
-	if card.Due != &empty {
+	if card.Due != nil && *card.Due != "" {
 		formattedDue := formatDate(*card.Due, cfg)
 		content.WriteString(fmt.Sprintf("Due: %s  # due date\n", formattedDue))
 	} else {
