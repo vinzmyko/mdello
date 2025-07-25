@@ -88,6 +88,9 @@
 
 - Create a `open` in which it opens your prefered browser to look at your tasks ✅
 - Update the `help` command ✅
+- Need to allow the edited file to recognise which trello object id it is by putting the trello object id in the header ✅
+    - Now able to insert the trello id key onto the bulk action for detailed actions ✅
+- Implement README.txt for my cli tool ✅
 
 ## Queued Up
 - Use cli tool and when you notice bugs write them down and fix
@@ -110,3 +113,6 @@
 "Error parsing markdown: invalid label format: labels cannot contain spaces. Use ~ for spaces (e.g., @front~end for 'front end')"
     - On this line `	if invalidLabelPattern := regexp.MustCompile(`@\w+\s+\w`).FindString(tempText); invalidLabelPattern != "" {`
         - This is because it didn't recognise that format. We need to update the error message because I did not know what the error was that I forgot the `:`
+- [High] Seems like there are some positions bugs when moving lists
+    - To reproduce I deleted a list called `Done` and then created another one and moved it to the end
+        - Need more ways to reproduce the bug so I can fix it. Do not know the edge cases
