@@ -117,8 +117,15 @@ var boardCmd = &cobra.Command{
 			}
 
 			if len(detailedActions) > 0 {
-				fmt.Printf("Applying %d detailed change(s)...\n", len(detailedActions))
-				applyActionsInOrder(detailedActions, trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID})
+				fmt.Printf("\nApplying %d detailed change(s)...\n", len(detailedActions))
+
+				for _, action := range detailedActions {
+					if err := action.Apply(trelloClient, &markdown.ActionContext{BoardID: cfg.CurrentBoardID}); err != nil {
+						fmt.Printf("%v", err)
+						return
+					}
+				}
+
 				fmt.Println("Detailed changes applied!")
 			} else {
 				fmt.Println("No actionable detailed changes detected.")

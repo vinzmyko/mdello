@@ -105,16 +105,17 @@ func (p *DetailedMarkdownParser) Parse() ([]DetailedTrelloAction, error) {
 }
 
 func (p *DetailedMarkdownParser) StartNewSection(headerLine string) {
-	re := regexp.MustCompile(`# EDITING (\w+): (.+)`)
-	matches := re.FindStringSubmatch(headerLine)
+    re := regexp.MustCompile(`# EDITING (\w+): (.+?) \{([^}]+)\}`)
+    matches := re.FindStringSubmatch(headerLine)
 
-	if len(matches) >= 3 {
-		p.Current = &DetailedTrelloAction{
-			ObjectType: strings.ToLower(matches[1]),
-			ObjectName: matches[2],
-			Fields:     make(map[string]string),
-		}
-	}
+    if len(matches) >= 4 {
+        p.Current = &DetailedTrelloAction{
+            ObjectType: strings.ToLower(matches[1]),
+            ObjectName: matches[2],
+            ObjectID:   matches[3],
+            Fields:     make(map[string]string),
+        }
+    }
 }
 
 func (p *DetailedMarkdownParser) ParseFieldLine(line string) {

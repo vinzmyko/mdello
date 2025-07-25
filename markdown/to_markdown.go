@@ -92,7 +92,7 @@ func GenerateDetailedBoardContent(action DetailedTrelloAction, trelloClient *tre
 		return "", fmt.Errorf("Failed to get board when generating detailed board content: %w", err)
 	}
 
-	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType), action.ObjectID))
 
 	content.WriteString("\n## Description\n")
 	content.WriteString("=== DESCRIPTION START ===\n")
@@ -130,7 +130,7 @@ func GenerateDetailedListContent(action DetailedTrelloAction, trelloClient *trel
 		return "", fmt.Errorf("Failed to get list when generating detailed list content: %w", err)
 	}
 
-	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType), action.ObjectID))
 
 	content.WriteString("\n## List Settings\n")
 	content.WriteString(fmt.Sprintf("Name: %s\n", list.Name))
@@ -151,7 +151,7 @@ func GenerateDetailedCardContent(action DetailedTrelloAction, trelloClient *trel
 		return "", fmt.Errorf("Failed to get card when generating detailed card content: %w", err)
 	}
 
-	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType)))
+	content.WriteString(generateSectionHeader(action.ObjectName, string(action.ObjectType), action.ObjectID))
 
 	content.WriteString("\n## Description\n")
 	content.WriteString("=== DESCRIPTION START ===\n")
@@ -192,10 +192,10 @@ func GenerateDetailedCardContent(action DetailedTrelloAction, trelloClient *trel
 
 const sectionHeaderSeparatorLength = 77
 
-func generateSectionHeader(title, objectType string) string {
+func generateSectionHeader(title, objectType, objectID string) string {
 	separator := strings.Repeat("=", sectionHeaderSeparatorLength)
-	return fmt.Sprintf("# %s\n# EDITING %s: %s\n# %s\n",
-		separator, strings.ToUpper(objectType), title, separator)
+	return fmt.Sprintf("# %s\n# EDITING %s: %s {%s}\n# %s\n",
+		separator, strings.ToUpper(objectType), title, objectID, separator)
 }
 
 func formatDate(due string, configuration *config.Config) string {
