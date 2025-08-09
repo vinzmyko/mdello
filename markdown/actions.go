@@ -115,7 +115,7 @@ func (detailedAct DetailedUpdateBoardAction) Apply(t *trello.TrelloClient, ctx *
 	}
 
 	_, err := t.UpdateBoard(params)
-	return err
+	return fmt.Errorf(`Failed to update board: %w`, err)
 }
 
 func (detailedAct DetailedUpdateBoardAction) Description() string {
@@ -135,7 +135,7 @@ func (act UpdateBoardNameAction) Apply(t *trello.TrelloClient, ctx *ActionContex
 	}
 
 	_, err := t.UpdateBoard(params)
-	return err
+	return fmt.Errorf(`Error updating board name: %w`, err)
 }
 
 func (act UpdateBoardNameAction) Description() string {
@@ -156,7 +156,7 @@ func (act CreateLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) e
 		Colour:  act.Colour,
 	}
 	_, err := t.CreateLabel(params)
-	return err
+	return fmt.Errorf(`Error creating label: %w`, err)
 }
 
 func (act CreateLabelAction) Description() string {
@@ -175,7 +175,7 @@ func (act UpdateLabelName) Apply(t *trello.TrelloClient, ctx *ActionContext) err
 		Name: &act.NewName,
 	}
 	_, err := t.UpdateLabel(params)
-	return err
+	return fmt.Errorf(`Error updating label name: %w`, err)
 }
 
 func (act UpdateLabelName) Description() string {
@@ -195,7 +195,7 @@ func (act UpdateLabelColour) Apply(t *trello.TrelloClient, ctx *ActionContext) e
 		Colour: &act.NewColour,
 	}
 	_, err := t.UpdateLabel(params)
-	return err
+	return fmt.Errorf(`Error updating label colour: %w`, err)
 }
 
 func (act UpdateLabelColour) Description() string {
@@ -209,7 +209,7 @@ type DeleteLabelAction struct {
 
 func (act DeleteLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	err := t.DeleteLabel(act.ID)
-	return err
+	return fmt.Errorf(`Error deleting label: %w`, err)
 }
 
 func (act DeleteLabelAction) Description() string {
@@ -254,7 +254,7 @@ func (detailedAct DetailedUpdateListAction) Apply(t *trello.TrelloClient, ctx *A
 	}
 
 	_, err := t.UpdateList(params)
-	return err
+	return fmt.Errorf(`Failed to update detailed information of list: %w`, err)
 }
 
 func (detailedAct DetailedUpdateListAction) Description() string {
@@ -276,7 +276,7 @@ func (act CreateListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) er
 		Pos:     &posStr,
 	}
 	_, err := t.CreateList(params)
-	return err
+	return fmt.Errorf(`Error failed to create list action: %w`, err)
 }
 
 func (act CreateListAction) Description() string {
@@ -296,7 +296,7 @@ func (act UpdateListNameAction) Apply(t *trello.TrelloClient, ctx *ActionContext
 		Name: &act.NewName,
 	}
 	_, err := t.UpdateList(params)
-	return err
+	return fmt.Errorf(`Error failed to update list name: %w`, err)
 }
 
 func (act UpdateListNameAction) Description() string {
@@ -318,7 +318,7 @@ func (act UpdateListPositionAction) Apply(t *trello.TrelloClient, ctx *ActionCon
 		Pos: &posStr,
 	}
 	_, err := t.UpdateList(params)
-	return err
+	return fmt.Errorf(`Error failed to update list position: %w`, err)
 }
 
 func (act UpdateListPositionAction) Description() string {
@@ -338,7 +338,7 @@ func (act ArchiveListAction) Apply(t *trello.TrelloClient, ctx *ActionContext) e
 		Value: &val,
 	}
 	_, err := t.ArchiveList(params)
-	return err
+	return fmt.Errorf(`Error failed to archive list: %w`, err)
 }
 
 func (act ArchiveListAction) Description() string {
@@ -403,7 +403,7 @@ func (detailedAct DetailedUpdateCardAction) Apply(t *trello.TrelloClient, ctx *A
 	}
 
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to update detailed card params: %w`, err)
 }
 
 func (detailedAct DetailedUpdateCardAction) Description() string {
@@ -442,7 +442,7 @@ func (act CreateCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) er
 		DueComplete: &act.IsCompleted,
 	}
 	_, err = t.CreateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to create card: %w`, err)
 }
 
 func (act CreateCardAction) Description() string {
@@ -466,7 +466,7 @@ func (act MoveCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) erro
 		Pos:    &posStr,
 	}
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to update move card action: %w`, err)
 }
 
 func (act MoveCardAction) Description() string {
@@ -485,7 +485,7 @@ func (act UpdateCardNameAction) Apply(t *trello.TrelloClient, ctx *ActionContext
 		Name: &act.NewName,
 	}
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to update card name: %w`, err)
 }
 
 func (act UpdateCardNameAction) Description() string {
@@ -507,7 +507,7 @@ func (act UpdateCardPositionAction) Apply(t *trello.TrelloClient, ctx *ActionCon
 		Pos: &posStr,
 	}
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to update card position: %w`, err)
 }
 
 func (act UpdateCardPositionAction) Description() string {
@@ -526,7 +526,7 @@ func (act UpdateCardIsCompletedAction) Apply(t *trello.TrelloClient, ctx *Action
 		DueComplete: &act.IsComplete,
 	}
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to update card is completed field: %w`, err)
 }
 
 func (act UpdateCardIsCompletedAction) Description() string {
@@ -619,7 +619,7 @@ func (act UpdateCardDueDate) Apply(t *trello.TrelloClient, ctx *ActionContext) e
 					Due: &act.Due,
 				}
 				_, err := t.UpdateCard(params)
-				return err
+				return fmt.Errorf(`Error failed to update card: %w`, err)
 			}
 		}
 	}
@@ -644,7 +644,7 @@ func (act DeleteCardDueDate) Apply(t *trello.TrelloClient, ctx *ActionContext) e
 		Due: &emptyString,
 	}
 	_, err := t.UpdateCard(params)
-	return err
+	return fmt.Errorf(`Error failed to detele card due date: %w`, err)
 }
 
 func (act DeleteCardDueDate) Description() string {
@@ -665,7 +665,7 @@ func (act DeleteCardLabelAction) Apply(t *trello.TrelloClient, ctx *ActionContex
 		LabelID: act.LabelID,
 	}
 	err := t.DeleteCardLabel(params)
-	return err
+	return fmt.Errorf(`Error failed to delete card label: %w`, err)
 }
 
 func (act DeleteCardLabelAction) Description() string {
@@ -679,7 +679,7 @@ type DeleteCardAction struct {
 
 func (act DeleteCardAction) Apply(t *trello.TrelloClient, ctx *ActionContext) error {
 	err := t.DeleteCard(act.CardID)
-	return err
+	return fmt.Errorf(`Error deleting card: %w`, err)
 }
 
 func (act DeleteCardAction) Description() string {
