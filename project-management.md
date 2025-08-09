@@ -91,13 +91,13 @@
 - Need to allow the edited file to recognise which trello object id it is by putting the trello object id in the header ✅
     - Now able to insert the trello id key onto the bulk action for detailed actions ✅
 - Implement README.txt for my cli tool ✅
+- in actions.go update all the `return err` into `return fmt.Errorf()` ✅
 
 ## Queued Up
 - Use cli tool and when you notice bugs write them down and fix
 
 ## Backlog
 - Add the Card checklist implementation in the detailedActions markdown section
-- in actions.go update all the `return err` into `return fmt.Errorf()`
 - If there are not invalid commands ask the user to fix it
 - When I didn't have net and tried to do cli command I got a weird error. Error wasn't obvious that my internet was down so fix that
 - Make a new command in which you can update user preferences. The only one I can think of would be if you want the board labels to show and put the date format here as well
