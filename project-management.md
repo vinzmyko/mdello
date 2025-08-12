@@ -92,6 +92,7 @@
     - Now able to insert the trello id key onto the bulk action for detailed actions ✅
 - Implement README.txt for my cli tool ✅
 - in actions.go update all the `return err` into `return fmt.Errorf()` ✅
+- make the the terminal input hidden ✅
 
 ## Queued Up
 - Use cli tool and when you notice bugs write them down and fix
