@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/vinzmyko/mdello/config"
 	"github.com/vinzmyko/mdello/trello"
+	"golang.org/x/term"
 )
 
 var initCmd = &cobra.Command{
@@ -35,13 +37,16 @@ var initCmd = &cobra.Command{
 		}
 
 		fmt.Println("Enter your Trello Token: ")
-		reader := bufio.NewReader(os.Stdin)
-		token, err := reader.ReadString('\n')
+
+		tokenBytes, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
+			fmt.Println()
 			printCancelled()
 			return
 		}
-		token = strings.TrimSpace(token)
+		fmt.Println()
+
+		token := strings.TrimSpace(string(tokenBytes))
 
 		trelloClient, err := trello.NewTrelloClient(apiKey, token)
 		if err != nil {
